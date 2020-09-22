@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="176dp"
+    android:padding="@dimen/activity_horizontal_margin"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark"
+    android:gravity="bottom"
+    android:background="@color/baseReleaseColor">
+
+
+   <ImageView
+       android:layout_width="70dp"
+       android:layout_height="70dp"
+       android:padding="20dp"></ImageView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Movers Inc."
+        android:textSize="36dp"
+        android:padding="8dp"
+        android:textColor="@color/basePressColor"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"></TextView>
+
+</LinearLayout>
+

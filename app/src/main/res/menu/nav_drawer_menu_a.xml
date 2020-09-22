@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+
+        <item
+            android:id="@+id/Driver"
+            android:icon="@drawable/ic_driver"
+            android:title="Driver" />
+
+        <item
+            android:id="@+id/history"
+            android:title="History"
+            android:icon="@drawable/ic_history"/>
+        <item
+            android:id="@+id/Customer"
+            android:icon="@drawable/ic_customer"
+            android:title="Customer" />
+
+        <item
+            android:id="@+id/settings"
+            android:title="Settings"
+            android:icon="@drawable/ic_settings"/>
+
+        <item
+            android:id="@+id/logout"
+            android:title="Logout"
+            android:icon="@drawable/ic_exit"/>
+
+
+    </group>
+
+</menu>
