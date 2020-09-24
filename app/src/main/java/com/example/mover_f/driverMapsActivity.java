@@ -133,6 +133,10 @@ public class driverMapsActivity extends AppCompatActivity implements OnMapReadyC
     GeoFire geoFireWorking;
 
 
+    //
+    DatabaseReference driverStat = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId);
+    //
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -170,6 +174,7 @@ public class driverMapsActivity extends AppCompatActivity implements OnMapReadyC
         mCustomerName = findViewById(R.id.customerName);
         mCustomerPhone = findViewById(R.id.customerPhone);
         mCustomerDestination = findViewById(R.id.customerDestination);
+
 
 
         mWorkingSwitch = findViewById(R.id.workingSwitch);
@@ -285,12 +290,15 @@ public class driverMapsActivity extends AppCompatActivity implements OnMapReadyC
                             case "":
 
                                 geoFireWorking.removeLocation(userId);
+                               driverStat.child("Status").setValue("Available");
                                 geoFireAvailable.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
                                 break;
 
                             default:
 
                                 geoFireAvailable.removeLocation(userId);
+
+                                driverStat.child("Status").setValue("Working");
                                 geoFireWorking.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
                                 break;
 
@@ -555,6 +563,7 @@ public class driverMapsActivity extends AppCompatActivity implements OnMapReadyC
 
 
 
+
         mRideStatus.setText("picked customer");
         erasePolylines();
         status = 0;
@@ -602,6 +611,8 @@ public class driverMapsActivity extends AppCompatActivity implements OnMapReadyC
         }
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
+
+        driverStat.child("Status").setValue("Offline");
 
         GeoFire geoFire = new GeoFire(ref);
         geoFire.removeLocation(userId);

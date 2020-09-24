@@ -83,7 +83,10 @@ public class driver_fragment1 extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 data.clear();
                 for (DataSnapshot s : snapshot.getChildren()){
-                    data.add(s.getValue(driver_model.class));
+                    if(s.hasChild("Status") && s.child("Status").getValue().toString().equals("Available")){
+
+                        data.add(s.getValue(driver_model.class));}
+
                 }
 
 
