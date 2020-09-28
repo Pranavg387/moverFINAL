@@ -182,10 +182,11 @@ public class phone_authentication extends AppCompatActivity {
                             else if (user_type.equals("admin")){
                                 String user_id = mAuth.getCurrentUser().getUid();
                                 mDriverDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Admins").child(user_id);
-
+                                Log.d("XXX", String.valueOf(mDriverDatabase));
                                 mDriverDatabase.addValueEventListener(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
+                                        Log.d("XXX2", String.valueOf(dataSnapshot));
                                         if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0){
                                             Log.d("adam",dataSnapshot.child("phone").toString());
 
@@ -269,7 +270,7 @@ public class phone_authentication extends AppCompatActivity {
 
                             Toast.makeText(phone_authentication.this, "AUTH FAILED", Toast.LENGTH_SHORT).show();
 
-                            }
+                        }
 
                     }
                 });

@@ -210,6 +210,7 @@ public class driverSettingsActivity extends AppCompatActivity {
         userInfo.put("phone", mPhone);
         userInfo.put("car", mCar);
         userInfo.put("service", mService);
+        userInfo.put("Status","Offline");
 
         if(mSelf.isChecked()){
             userInfo.put("adminId", mSelf.getText());

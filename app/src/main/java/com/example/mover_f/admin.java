@@ -48,6 +48,15 @@ public class admin extends AppCompatActivity implements NavigationView.OnNavigat
                 startActivity(intent);
                 finish();
                 break;
+
+            case R.id.logout :
+                //if(status ==0)
+                FirebaseAuth.getInstance().signOut();
+                intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                finish();
+                break;
+
         }
         return true;
     }

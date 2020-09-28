@@ -93,7 +93,7 @@ public class adminSettingsActivity extends AppCompatActivity {
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               setAdminID();
+              setAdminID();
             }
         });
 
@@ -310,8 +310,8 @@ public class adminSettingsActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
 
-        if(mAdminId.getText().toString().equals("")){
-
+        if(String.valueOf(value).equals("")){
+            Log.d("XXXB",String.valueOf(value));
             user.delete();
         }
         super.onStop();
@@ -321,8 +321,8 @@ public class adminSettingsActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
 
-        if(mAdminId.getText().toString().equals("")){
-
+        if(String.valueOf(value).equals("")){
+            Log.d("XXXB",String.valueOf(value));
             user.delete();
     }  super.onPause();
     }
@@ -330,8 +330,10 @@ public class adminSettingsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if(mAdminId.getText().toString().equals("")){
 
+
+        if(String.valueOf(value).equals("")){
+            Log.d("XXXB",String.valueOf(value));
             user.delete();
             }
         super.onBackPressed();
