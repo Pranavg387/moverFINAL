@@ -120,7 +120,7 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
     private RatingBar mRatingBar;
     private DrawerLayout mNavDrawer;
 
-    public static final String rec_drive_can_s=null;
+    public static final String rec_drive_can_s="rec_drive_can_s";
     private String rec_driv_can = null;
 
     String newS;
@@ -199,6 +199,9 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
         initGoogleMap();
 
 if(rec_driv_can!=null) {
+Log.d("XXXR",String.valueOf(rec_driv_can));
+    Log.d("XXXR",String.valueOf(driverFoundID));
+
     newS = rec_driv_can.split("#", 2)[0];
     newT = rec_driv_can.split("#", 2)[1];
 }
@@ -362,7 +365,7 @@ if(rec_driv_can!=null) {
     //shared preferences
     public static final String MyPREFERENCES = "com.ex.mover_f";
 
-    public static final String driverFoundId_s = null;
+    public static final String driverFoundId_s = "driverFoundId_s";
     SharedPreferences sharedpreferences;
 
     DatabaseReference driverLocation;

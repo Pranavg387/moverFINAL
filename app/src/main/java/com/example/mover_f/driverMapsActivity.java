@@ -322,7 +322,7 @@ public class driverMapsActivity extends AppCompatActivity implements OnMapReadyC
     //shared preferences
     public static final String MyPREFERENCES = "com.ex.mover_f";
 
-    public static final String customerId_s = "";
+    public static final String customerId_s = "customerId_s";
     SharedPreferences sharedpreferences;
 
 
