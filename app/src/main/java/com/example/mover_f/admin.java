@@ -49,6 +49,12 @@ public class admin extends AppCompatActivity implements NavigationView.OnNavigat
                 finish();
                 break;
 
+            case R.id.Customer:
+                intent = new Intent(this, admin_customer_list.class);
+                startActivity(intent);
+                finish();
+                break;
+
             case R.id.logout :
                 //if(status ==0)
                 FirebaseAuth.getInstance().signOut();
@@ -56,6 +62,7 @@ public class admin extends AppCompatActivity implements NavigationView.OnNavigat
                 startActivity(intent);
                 finish();
                 break;
+
 
         }
         return true;

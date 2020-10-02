@@ -214,6 +214,7 @@ public class adminSettingsActivity extends AppCompatActivity {
                     userInfo.put("name", mName);
                     userInfo.put("phone", mPhone);
                     userInfo.put("adminId", value);
+                    userInfo.put("myDrivers",true);
 
                     mAdminDatabase.child(userID).setValue(userInfo);
 

@@ -81,6 +81,7 @@ public class driver_fragment2 extends Fragment {
                 data.clear();
                 for (DataSnapshot s : snapshot.getChildren()){
                     if(s.hasChild("Status") && s.child("Status").getValue().toString().equals("Working")){
+
                     data.add(s.getValue(driver_model.class));}
 
                 }

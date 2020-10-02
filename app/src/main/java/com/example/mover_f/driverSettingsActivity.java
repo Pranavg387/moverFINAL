@@ -62,7 +62,7 @@ public class driverSettingsActivity extends AppCompatActivity {
     private String empType;
     private EditText mAdminId;
     private FirebaseUser user;
-
+    private DatabaseReference db;
 
 
 
@@ -201,9 +201,12 @@ public class driverSettingsActivity extends AppCompatActivity {
         }
 
 
-
+        db = FirebaseDatabase.getInstance().getReference().child("Users").child("Admins");
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         mService = radioButton.getText().toString();
+
+
 
         Map userInfo = new HashMap();
         userInfo.put("name", mName);
@@ -215,7 +218,33 @@ public class driverSettingsActivity extends AppCompatActivity {
         if(mSelf.isChecked()){
             userInfo.put("adminId", mSelf.getText());
         }else{
+
+            db.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    for (DataSnapshot s : snapshot.getChildren()){
+                        String a = s.child("adminId").getValue().toString();
+                        Log.d("adamax0:",a);
+                        String key_admin = s.getKey();
+                        if (a.equals(mAdminId.getText().toString())){
+
+                            Log.d("adamax1:",userId);
+                            DatabaseReference db_new = db.child(key_admin).child("myDrivers").push();
+                            db_new.setValue(userId);
+
+                        }
+                    }
+
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+
             userInfo.put("adminId", mAdminId.getText().toString());
+
         }
 
         mDriverDatabase.child(userID).setValue(userInfo);
