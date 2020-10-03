@@ -7,7 +7,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -17,6 +19,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import historyRecyclerView.HistoryAdapter;
 import historyRecyclerView.HistoryObject;
@@ -58,6 +61,7 @@ public class admin_customer_list extends AppCompatActivity {
         driver_Status = getCustomers();
 
         findHistory();
+        getCustomerInfo();
 
 
 
@@ -71,27 +75,20 @@ public class admin_customer_list extends AppCompatActivity {
     }
 
     private boolean  getCustomers(){
-        Log.d("adamasz", String.valueOf(z));
 
         db.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                Log.d("adamasz", String.valueOf(snapshot.getChildrenCount()));
                 z = (int) snapshot.getChildrenCount();
 
                 for (DataSnapshot s : snapshot.getChildren()){
                     String a = s.getValue().toString();
-
-                    //Log.d("adamax0:",a);
                     driver_k.add(a);
 
                 }
 
                 findme();
-                Log.d("adamax1:",driver_k.toString());
-
-
             }
 
             @Override
@@ -105,20 +102,15 @@ public class admin_customer_list extends AppCompatActivity {
     }
 
     public void findme(){
-        Log.d("adamax200", String.valueOf(driver_k.size()));
+
         for (int i =0; i<driver_k.size();i++){
-            Log.d("adamasz1", String.valueOf(i));
             DatabaseReference db1 =FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driver_k.get(i)).child("history");
 
             db1.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                     Log.d("adamax3", String.valueOf("starting inner loop"));
-
                     for (DataSnapshot s : snapshot.getChildren()){
 
-                        Log.d("adamax3", String.valueOf(s.getKey()));//if  deriver_k
-                        //if (s.getKey())
                         driverHistory.add(s.getKey());
 
 
@@ -127,9 +119,6 @@ public class admin_customer_list extends AppCompatActivity {
                         }
 
                     }
-
-                    Log.d("adamax222:", String.valueOf(driverHistory));
-
 
                 }
 
@@ -148,18 +137,16 @@ public class admin_customer_list extends AppCompatActivity {
 
     public void findHistory(){
 
-        Log.d("adamax2001", String.valueOf(driverHistory));
         for (int i =0; i<driverHistory.size();i++) {
             DatabaseReference db = FirebaseDatabase.getInstance().getReference().child("history").child(driverHistory.get(i));
             int finalI = i;
-            Log.d("adamax43", String.valueOf(db.getKey()));//if  deriver_k
             db.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    Log.d("adamax75", String.valueOf(snapshot.child("customer").getValue()));
                     historyCustomer.add((String) snapshot.child("customer").getValue());
-                    Log.d("adamax78", String.valueOf(historyCustomer));
 
+
+                         getCustomerInfo();
 
                 }
 
@@ -171,4 +158,45 @@ public class admin_customer_list extends AppCompatActivity {
         }
 
     }
+
+
+    public void getCustomerInfo(){
+
+        for (int i =0; i<historyCustomer.size();i++) {
+            DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(historyCustomer.get(i));
+            mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+
+                    if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                        String phone = "", name = "";
+                        Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
+                        if (map.get("name") != null) {
+                           name= map.get("name").toString();
+
+                        }
+                        if (map.get("phone") != null) {
+
+                            phone= map.get("phone").toString();
+
+                        }
+                        admin_customer_model cust = new admin_customer_model(name,phone,"");
+                        resultsCustomers.add(cust);
+                        mAdminAdapter.notifyDataSetChanged();
+
+                    }
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            });
+
+        }
+
+    }
+
+
+
 }
