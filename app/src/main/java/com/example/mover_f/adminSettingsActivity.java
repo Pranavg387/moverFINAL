@@ -4,7 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -58,6 +60,10 @@ public class adminSettingsActivity extends AppCompatActivity {
     private Uri resultUri;
     private FirebaseUser user;
 
+    public static final String MyPREFERENCES = "com.ex.mover_f";
+    SharedPreferences sharedpreferences;
+    private String adminId,adminId_s="adminId_s";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +74,8 @@ public class adminSettingsActivity extends AppCompatActivity {
         mAdminId = findViewById(R.id.adminId);
         mProfileImage = findViewById(R.id.profileImage);
 
+        sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        adminId = sharedpreferences.getString(adminId_s, null);
 
        // mBack = findViewById(R.id.back);
         mConfirm = findViewById(R.id.login);
@@ -214,6 +222,10 @@ public class adminSettingsActivity extends AppCompatActivity {
                     userInfo.put("name", mName);
                     userInfo.put("phone", mPhone);
                     userInfo.put("adminId", value);
+                    SharedPreferences.Editor editor1 = sharedpreferences.edit();
+                    editor1.putString(adminId_s ,String.valueOf(value));
+                    editor1.apply();
+
                     userInfo.put("myDrivers",true);
 
                     mAdminDatabase.child(userID).setValue(userInfo);

@@ -17,7 +17,7 @@ public class LoginActivity extends AppCompatActivity {
     public static final String MyPREFERENCES = "com.ex.mover_f";
     SharedPreferences sharedpreferences;
 
-    private String userType,userType_s;
+    private String userType,userType_s="userType_s";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

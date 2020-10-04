@@ -13,12 +13,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-
 import com.example.mover_f.ui.main.SectionsPagerAdapter;
+
 
 public class admin_driver_stat extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     private DrawerLayout mNavDrawer;

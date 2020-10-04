@@ -58,7 +58,7 @@ public class admin_customer_list extends AppCompatActivity {
         db_driver = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers");
         db_customer = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers");
 
-        driver_Status = getCustomers();
+        driver_Status = getDrivers();
 
         findHistory();
         getCustomerInfo();
@@ -74,7 +74,7 @@ public class admin_customer_list extends AppCompatActivity {
 
     }
 
-    private boolean  getCustomers(){
+    private boolean  getDrivers(){
 
         db.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

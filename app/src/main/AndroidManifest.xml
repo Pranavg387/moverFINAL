@@ -18,7 +18,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".admin_customer_list"></activity>
+        <activity android:name=".adminDetailedHistory"></activity>
+        <activity android:name=".adminHistory" />
+        <activity android:name=".admin_customer_list" />
         <activity
             android:name=".admin_driver_stat"
             android:label="@string/title_activity_admin_driver_stat"

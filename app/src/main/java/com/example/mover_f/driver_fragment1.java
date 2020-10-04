@@ -1,21 +1,19 @@
 package com.example.mover_f;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -30,6 +28,9 @@ public class driver_fragment1 extends Fragment {
     private RecyclerView recyclerView;
     View v;
     ProgressDialog progressDialog;
+    private SharedPreferences sp;
+    private String MyPREFERENCES = "com.ex.mover_f";
+    private String adminId;
 
     private List<driver_model> data = new ArrayList<>();
 
@@ -42,6 +43,9 @@ public class driver_fragment1 extends Fragment {
             LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState
     ) {
+        sp = this.getActivity().getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        adminId = sp.getString("adminId_s", null);
+
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.driver_fragment1_layout, container, false);
@@ -65,6 +69,7 @@ public class driver_fragment1 extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         this.v = view;
         init();
         progressDialog = new ProgressDialog(getActivity());
@@ -72,18 +77,19 @@ public class driver_fragment1 extends Fragment {
         progressDialog.setMessage("Syncing");
         progressDialog.setCancelable(false);
         progressDialog.show();
-        loaddata();
+        loadData();
 
     }
 
-    private void loaddata(){
+    
+    private void loadData(){
 
         db.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 data.clear();
                 for (DataSnapshot s : snapshot.getChildren()){
-                    if(s.hasChild("Status") && s.child("Status").getValue().toString().equals("Available")){
+                    if(s.hasChild("Status") && s.child("Status").getValue().toString().equals("Available") && s.child("adminId").getValue().toString().equals(adminId)){
 
                         data.add(s.getValue(driver_model.class));}
 

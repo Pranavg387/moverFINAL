@@ -28,9 +28,6 @@ public class admin_login_otp extends AppCompatActivity {
     private Button register;
     private Button back;
 
-    private SharedPreferences sp;
-    private String MyPREFERENCES = "com.ex.mover_f";
-    private String userType;
     private DatabaseReference db;
     private Boolean status = false;
 
@@ -44,8 +41,6 @@ public class admin_login_otp extends AppCompatActivity {
         register = findViewById(R.id.register);
         back = findViewById(R.id.back);
 
-        sp = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
-        userType = sp.getString("userType_s", null);
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override
