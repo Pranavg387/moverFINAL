@@ -50,6 +50,7 @@ import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -65,6 +66,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.TypeFilter;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -77,12 +84,15 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import static android.view.View.GONE;
 
 public class customerMapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
     private static final int PERMISSION_REQUEST_CODE = 9001;
@@ -94,12 +104,12 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
     private EditText mSearchAddress;
 
     private int Status = 0;
-
+    private String destination = "";
     public static final int DEFAULT_ZOOM = 15;
     private FusedLocationProviderClient mLocationClient;
     private LocationCallback mLocationCallback;
 
-    private LatLng pickupLocation, destinationLatLng;
+    private LatLng pickupLocation, fragment_pickup = null, destinationLatLng;
 
     private List<Polyline> polylines = null;
     private Button requestRide, mSettings, mBtnLocate;
@@ -123,9 +133,15 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
     public static final String rec_drive_can_s="rec_drive_can_s";
     private String rec_driv_can = null;
 
+   private String apiKey;
     String newS;
     String newT;
     int diff;
+    private PlacesClient placesClient;
+    private AutocompleteSupportFragment autocompleteFragment;
+    private PlacesClient pickupClient;
+    private AutocompleteSupportFragment pickup_autocompleteFragment;
+
     loadingDialog mloadingDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,6 +167,70 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
         // **************************
 
+        //
+        apiKey = getString(R.string.api_key);
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), apiKey);
+        }
+
+        // Create a new Places client instance.
+        placesClient = Places.createClient(this);
+        autocompleteFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.et_address);
+      //  autocompleteFragment.setTypeFilter(TypeFilter.ADDRESS);
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.PHOTO_METADATAS));
+        autocompleteFragment.getView().setBackgroundColor(getResources().getColor(R.color.quantum_white_100));
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                // TODO: Get info about the selected place.
+                destination = place.getName();
+                destinationLatLng = place.getLatLng();
+                geoLocate();
+                Toast.makeText(getApplicationContext(), place.getName(), Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                // TODO: Handle the error.
+
+
+                Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        //
+
+
+
+        //
+        pickupClient = Places.createClient(this);
+        pickup_autocompleteFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.et_pickup);
+        //  autocompleteFragment.setTypeFilter(TypeFilter.ADDRESS);
+        pickup_autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG));
+        pickup_autocompleteFragment.getView().setBackgroundColor(getResources().getColor(R.color.quantum_white_100));
+
+        pickup_autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                // TODO: Get info about the selected place.
+                fragment_pickup = place.getLatLng();
+                Log.d("ADAMX999", String.valueOf(fragment_pickup.latitude));
+                Toast.makeText(getApplicationContext(), place.getName(), Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                // TODO: Handle the error.
+
+
+                Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        //
 
         //LOADING SCREEN
 
@@ -169,10 +249,10 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
         Log.d("adam", String.valueOf(requestBol));
 
 
-        destination = "";
-        mSearchAddress = findViewById(R.id.et_address);
-        mBtnLocate = findViewById(R.id.btn_locate);
-        mBtnLocate.setOnClickListener(this::geoLocate);
+
+//        mSearchAddress = findViewById(R.id.et_address);
+     //   mBtnLocate = findViewById(R.id.btn_locate);
+      //  mBtnLocate.setOnClickListener(this::geoLocate);
 
         cancelRide = findViewById(R.id.cancelRide);
 
@@ -254,7 +334,8 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
 
 
                 } else {
-                    if (destination != ""   ) {
+
+                    if (!destination.equals("")) {
 
 
                         Toast.makeText(customerMapsActivity.this, "Press Again to Cancel", Toast.LENGTH_SHORT).show();
@@ -294,8 +375,14 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
                                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
 
                                 GeoFire geoFire = new GeoFire(ref);
-                                geoFire.setLocation(userId, new GeoLocation(pickupLocation.latitude, pickupLocation.longitude));
 
+                                if(fragment_pickup==(null))
+                                geoFire.setLocation(userId, new GeoLocation(pickupLocation.latitude, pickupLocation.longitude));
+                                else{
+                                    pickupLocation = fragment_pickup;
+                                    geoFire.setLocation(userId, new GeoLocation(pickupLocation.latitude, pickupLocation.longitude));
+
+                                }
                                 //LOOK FOR DRIVERS
                                 getClosestDriver();
 
@@ -514,9 +601,11 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Status = 1;
-                    mRadioGroup.setVisibility(View.GONE);
-                    mSearchAddress.setVisibility(View.GONE);
-                    mBtnLocate.setVisibility(View.GONE);
+                    mRadioGroup.setVisibility(GONE);
+                   // mSearchAddress.setVisibility(View.GONE);
+                    autocompleteFragment.getView().setVisibility(GONE);
+
+                   // mBtnLocate.setVisibility(View.GONE);
 
 
                     mDriverInfo.setVisibility(View.VISIBLE);
@@ -664,14 +753,14 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     |
     *-------------------------------------------------------------------*/
 
-    String destination;
-    private void geoLocate(View view) {
+
+    private void geoLocate() {
 
 
 
-        hideSoftKeyboard(view);
 
-        destination = mSearchAddress.getText().toString();
+
+       // destination = mSearchAddress.getText().toString();
 
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
@@ -793,9 +882,11 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
         }
         requestRide.setText("FIND MOVER");
         mRadioGroup.setVisibility(View.VISIBLE);
-        mBtnLocate.setVisibility(View.VISIBLE);
-        mSearchAddress.setVisibility(View.VISIBLE);
-        mDriverInfo.setVisibility(View.GONE);
+        autocompleteFragment.getView().setVisibility(View.VISIBLE);
+
+       // mBtnLocate.setVisibility(View.VISIBLE);
+       // mSearchAddress.setVisibility(View.VISIBLE);
+        mDriverInfo.setVisibility(GONE);
         mDriverName.setText("");
         mDriverPhone.setText("");
         mDriverCar.setText("Destination: --");
