@@ -132,6 +132,8 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
     public static final String rec_drive_can_s="rec_drive_can_s";
     private String rec_driv_can = null;
+    public static final String multiple_dest_s = "multiple_dest_s", multiple_loc_s="multiple_loc_s";
+    private  String multiple_dest = null, multiple_loc= null;
 
    private String apiKey;
     String newS;
@@ -147,6 +149,19 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_drawer_layout_c);
+
+        sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        multiple_dest = sharedpreferences.getString(multiple_dest_s,null);
+        String[] latlong1 =  multiple_dest.split(",");
+        double latitude1 = Double.parseDouble(latlong1[0]);
+        double longitude1 = Double.parseDouble(latlong1[1]);
+        destinationLatLng =new LatLng(latitude1, longitude1);
+        Log.d("adamxx", String.valueOf(destinationLatLng));
+        multiple_loc =  sharedpreferences.getString(multiple_loc_s,null);
+        String[] latlong2 =  multiple_loc.split(",");
+        double latitude2 = Double.parseDouble(latlong2[0]);
+        double longitude2 = Double.parseDouble(latlong2[1]);
+        fragment_pickup =new LatLng(latitude1, longitude1);
 
         //***************TOOLBAR**********************
 
@@ -167,7 +182,7 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
         // **************************
 
-        //
+        /***
         apiKey = getString(R.string.api_key);
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), apiKey);
@@ -230,7 +245,7 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
                 Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
             }
         });
-        //
+        ***/
 
         //LOADING SCREEN
 
@@ -238,9 +253,6 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
         //
 
-
-
-        sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         driverFoundID = sharedpreferences.getString(driverFoundId_s, null);
         rec_driv_can = sharedpreferences.getString(rec_drive_can_s,null);
 
@@ -248,15 +260,13 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
         Log.d("adam", String.valueOf(requestBol));
 
-
-
-//        mSearchAddress = findViewById(R.id.et_address);
-     //   mBtnLocate = findViewById(R.id.btn_locate);
+       //    mSearchAddress = findViewById(R.id.et_address);
+      //  mBtnLocate = findViewById(R.id.btn_locate);
       //  mBtnLocate.setOnClickListener(this::geoLocate);
 
         cancelRide = findViewById(R.id.cancelRide);
 
-        destinationLatLng = new LatLng(0.0, 0.0);
+
         mDriverInfo = findViewById(R.id.driverInfo);
 
         mDriverProfileImage = findViewById(R.id.driverProfileImage);
@@ -287,7 +297,10 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
 }
 
         requestRide = findViewById(R.id.requestRide);
+    //    requestRide.performClick();
 
+        if(requestRide.performClick())
+        Toast.makeText(this, "CLICKED", Toast.LENGTH_SHORT).show();
 
         requestRide.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -335,7 +348,7 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
 
                 } else {
 
-                    if (!destination.equals("")) {
+
 
 
                         Toast.makeText(customerMapsActivity.this, "Press Again to Cancel", Toast.LENGTH_SHORT).show();
@@ -389,9 +402,7 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
 
                             }
                         });
-                    } else {
-                        Toast.makeText(customerMapsActivity.this, "Enter Destination", Toast.LENGTH_SHORT).show();
-                    }
+
                 }
             }
 
@@ -451,10 +462,8 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     private GeoQuery geoQuery;
     //shared preferences
     public static final String MyPREFERENCES = "com.ex.mover_f";
-
-    public static final String driverFoundId_s = "driverFoundId_s";
     SharedPreferences sharedpreferences;
-
+    public static final String driverFoundId_s = "driverFoundId_s";
     DatabaseReference driverLocation;
 
 
@@ -603,7 +612,7 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
                     Status = 1;
                     mRadioGroup.setVisibility(GONE);
                    // mSearchAddress.setVisibility(View.GONE);
-                    autocompleteFragment.getView().setVisibility(GONE);
+//                    autocompleteFragment.getView().setVisibility(GONE);
 
                    // mBtnLocate.setVisibility(View.GONE);
 
@@ -754,7 +763,7 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     *-------------------------------------------------------------------*/
 
 
-    private void geoLocate() {
+  /**  private void geoLocate() {
 
 
 
@@ -795,7 +804,7 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
         }
 
 
-    }
+    }**/
 
 
 
@@ -882,7 +891,7 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
         }
         requestRide.setText("FIND MOVER");
         mRadioGroup.setVisibility(View.VISIBLE);
-        autocompleteFragment.getView().setVisibility(View.VISIBLE);
+//        autocompleteFragment.getView().setVisibility(View.VISIBLE);
 
        // mBtnLocate.setVisibility(View.VISIBLE);
        // mSearchAddress.setVisibility(View.VISIBLE);

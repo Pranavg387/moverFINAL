@@ -78,7 +78,7 @@ public class customer_login_otp extends AppCompatActivity {
 
                         if(s.getKey().equals(userId)){
                             status=true;
-                            Intent i = new Intent (customer_login_otp.this,customerMapsActivity.class);
+                            Intent i = new Intent (customer_login_otp.this,multipleRideActivity.class);
                             startActivity(i);
                         }
 
