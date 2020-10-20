@@ -109,16 +109,16 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
     private FusedLocationProviderClient mLocationClient;
     private LocationCallback mLocationCallback;
 
-    private LatLng pickupLocation, fragment_pickup = null, destinationLatLng;
-
+    private LatLng pickupLocation, fragment_pickup = null, destinationLatLng = null,driverLatLng=null;
+    Marker pickupMarker=null;
     private List<Polyline> polylines = null;
-    private Button requestRide, mSettings, mBtnLocate;
+    private Button  mSettings, mBtnLocate,cancelRide;
     private long backPressedTime;
     private Toast backToast;
     Marker mCustomerMarker = null;
-    Marker mDestinationMarker = null;
+    Marker mDestinationMarker = null,newMarker=null;
     private Boolean requestBol = false;
-    private TextView cancelRide;
+
     String requestService;
     private LinearLayout mDriverInfo;
 
@@ -126,7 +126,7 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
     private TextView mDriverName, mDriverPhone, mDriverCar;
 
-    private RadioGroup mRadioGroup;
+
     private RatingBar mRatingBar;
     private DrawerLayout mNavDrawer;
 
@@ -150,6 +150,18 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_drawer_layout_c);
 
+
+cancelRide = findViewById(R.id.cancelRide);
+cancelRide.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View view) {
+        endRide();
+    }
+});
+
+
+        Intent intent = getIntent();
+        driverFoundID = intent.getStringExtra("driverFoundId");
         sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         multiple_dest = sharedpreferences.getString(multiple_dest_s,null);
         String[] latlong1 =  multiple_dest.split(",");
@@ -162,6 +174,7 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
         double latitude2 = Double.parseDouble(latlong2[0]);
         double longitude2 = Double.parseDouble(latlong2[1]);
         fragment_pickup =new LatLng(latitude1, longitude1);
+
 
         //***************TOOLBAR**********************
 
@@ -182,127 +195,225 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
 
         // **************************
 
-        /***
-        apiKey = getString(R.string.api_key);
-        if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), apiKey);
-        }
 
-        // Create a new Places client instance.
-        placesClient = Places.createClient(this);
-        autocompleteFragment = (AutocompleteSupportFragment)
-                getSupportFragmentManager().findFragmentById(R.id.et_address);
-      //  autocompleteFragment.setTypeFilter(TypeFilter.ADDRESS);
-        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.PHOTO_METADATAS));
-        autocompleteFragment.getView().setBackgroundColor(getResources().getColor(R.color.quantum_white_100));
 
-        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+
+
+
+        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+
+        assignedCustomerRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onPlaceSelected(@NonNull Place place) {
-                // TODO: Get info about the selected place.
-                destination = place.getName();
-                destinationLatLng = place.getLatLng();
-                geoLocate();
-                Toast.makeText(getApplicationContext(), place.getName(), Toast.LENGTH_SHORT).show();
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Map<String, Object> map = (Map<String, Object>) snapshot.getValue();
+                if (map.get("destinationLat") != null && map.get("destinationLng") != null ) {
 
+                    Log.d("ADAMX()()", String.valueOf(map.get("destinationLat")));
+                    destinationLatLng = new LatLng(Double.parseDouble(String.valueOf(map.get("destinationLat"))),Double.parseDouble(String.valueOf(map.get("destinationLng"))));
+                    Log.d("ADAMX()()", String.valueOf(destinationLatLng));
+
+                    if(mDestinationMarker!=null){
+                        mDestinationMarker.remove();
+                    }
+                    mDestinationMarker = mGoogleMap.addMarker(new MarkerOptions().position(destinationLatLng).title("Your Destination"));
+
+
+
+                }
             }
 
             @Override
-            public void onError(@NonNull com.google.android.gms.common.api.Status status) {
-                // TODO: Handle the error.
+            public void onCancelled(@NonNull DatabaseError error) {
 
-
-                Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
-            }
-        });
-        //
-
-
-
-        //
-        pickupClient = Places.createClient(this);
-        pickup_autocompleteFragment = (AutocompleteSupportFragment)
-                getSupportFragmentManager().findFragmentById(R.id.et_pickup);
-        //  autocompleteFragment.setTypeFilter(TypeFilter.ADDRESS);
-        pickup_autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG));
-        pickup_autocompleteFragment.getView().setBackgroundColor(getResources().getColor(R.color.quantum_white_100));
-
-        pickup_autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
-            @Override
-            public void onPlaceSelected(@NonNull Place place) {
-                // TODO: Get info about the selected place.
-                fragment_pickup = place.getLatLng();
-                Log.d("ADAMX999", String.valueOf(fragment_pickup.latitude));
-                Toast.makeText(getApplicationContext(), place.getName(), Toast.LENGTH_SHORT).show();
-
-            }
-
-            @Override
-            public void onError(@NonNull com.google.android.gms.common.api.Status status) {
-                // TODO: Handle the error.
-
-
-                Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
             }
         });
-        ***/
-
-        //LOADING SCREEN
-
-        mloadingDialog = new loadingDialog(customerMapsActivity.this);
-
-        //
-
-        driverFoundID = sharedpreferences.getString(driverFoundId_s, null);
-        rec_driv_can = sharedpreferences.getString(rec_drive_can_s,null);
-
-        requestBol = sharedpreferences.getBoolean("req_bol",false);
-
-        Log.d("adam", String.valueOf(requestBol));
-
-       //    mSearchAddress = findViewById(R.id.et_address);
-      //  mBtnLocate = findViewById(R.id.btn_locate);
-      //  mBtnLocate.setOnClickListener(this::geoLocate);
-
-        cancelRide = findViewById(R.id.cancelRide);
 
 
-        mDriverInfo = findViewById(R.id.driverInfo);
+        DatabaseReference assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest").child("pickLocation").child("l");
+        ValueEventListener assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() ) {
 
-        mDriverProfileImage = findViewById(R.id.driverProfileImage);
+                    List<Object> map = (List<Object>) dataSnapshot.getValue();
+                    double locationLat = 0;
+                    double locationLng = 0;
+                    if (map.get(0) != null) {
+                        locationLat = Double.parseDouble(map.get(0).toString());
+                    }
+                    if (map.get(1) != null) {
+                        locationLng = Double.parseDouble(map.get(1).toString());
+                    }
 
-        mDriverName = findViewById(R.id.driverName);
-        mDriverPhone = findViewById(R.id.driverPhone);
-        mDriverCar = findViewById(R.id.driverCar);
-
-        mRatingBar = findViewById(R.id.ratingBar);
-        mRadioGroup = findViewById(R.id.radioGroup);
-        mRadioGroup.check(R.id.Truck);
+                    pickupLocation = new LatLng(locationLat, locationLng);
+                    Log.d("adamx()()",String.valueOf(pickupLocation));
 
 
+                    if(pickupMarker!=null){
+                        pickupMarker.remove();
+                    }
+                    pickupMarker = mGoogleMap.addMarker(new MarkerOptions().position(pickupLocation).title("You are Here"));
 
-        mLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-       supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
-        supportMapFragment.getMapAsync(this);
+                }
+            }
 
-        initGoogleMap();
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
 
-if(rec_driv_can!=null) {
-Log.d("XXXR",String.valueOf(rec_driv_can));
-    Log.d("XXXR",String.valueOf(driverFoundID));
+        DatabaseReference assignedDriverPickupLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
+        ValueEventListener assignedDriverPickupLocationRefListener =      assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() ) {
 
-    newS = rec_driv_can.split("#", 2)[0];
-    newT = rec_driv_can.split("#", 2)[1];
-}
 
-        requestRide = findViewById(R.id.requestRide);
-    //    requestRide.performClick();
+                    List<Object> map = (List<Object>) dataSnapshot.getValue();
+                    double locationLat = 0;
+                    double locationLng = 0;
+                    if (map.get(0) != null) {
+                        locationLat = Double.parseDouble(map.get(0).toString());
+                    }
+                    if (map.get(1) != null) {
+                        locationLng = Double.parseDouble(map.get(1).toString());
+                    }
 
-        if(requestRide.performClick())
-        Toast.makeText(this, "CLICKED", Toast.LENGTH_SHORT).show();
+                   driverLatLng  = new LatLng(locationLat, locationLng);
 
-        requestRide.setOnClickListener(new View.OnClickListener() {
+
+                    Log.d("adamx(1)()",String.valueOf(driverLatLng));
+
+                    if(newMarker!=null){
+                        newMarker.remove();
+                    }
+                    newMarker = mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Driver"));
+                 
+
+
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
+
+                    /***
+                     apiKey = getString(R.string.api_key);
+                     if (!Places.isInitialized()) {
+                     Places.initialize(getApplicationContext(), apiKey);
+                     }
+
+                     // Create a new Places client instance.
+                     placesClient = Places.createClient(this);
+                     autocompleteFragment = (AutocompleteSupportFragment)
+                     getSupportFragmentManager().findFragmentById(R.id.et_address);
+                     //  autocompleteFragment.setTypeFilter(TypeFilter.ADDRESS);
+                     autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.PHOTO_METADATAS));
+                     autocompleteFragment.getView().setBackgroundColor(getResources().getColor(R.color.quantum_white_100));
+
+                     autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                    @Override public void onPlaceSelected(@NonNull Place place) {
+                    // TODO: Get info about the selected place.
+                    destination = place.getName();
+                    destinationLatLng = place.getLatLng();
+                    geoLocate();
+                    Toast.makeText(getApplicationContext(), place.getName(), Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    @Override public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    // TODO: Handle the error.
+
+
+                    Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                    });
+                     //
+
+
+
+                     //
+                     pickupClient = Places.createClient(this);
+                     pickup_autocompleteFragment = (AutocompleteSupportFragment)
+                     getSupportFragmentManager().findFragmentById(R.id.et_pickup);
+                     //  autocompleteFragment.setTypeFilter(TypeFilter.ADDRESS);
+                     pickup_autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG));
+                     pickup_autocompleteFragment.getView().setBackgroundColor(getResources().getColor(R.color.quantum_white_100));
+
+                     pickup_autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                    @Override public void onPlaceSelected(@NonNull Place place) {
+                    // TODO: Get info about the selected place.
+                    fragment_pickup = place.getLatLng();
+                    Log.d("ADAMX999", String.valueOf(fragment_pickup.latitude));
+                    Toast.makeText(getApplicationContext(), place.getName(), Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    @Override public void onError(@NonNull com.google.android.gms.common.api.Status status) {
+                    // TODO: Handle the error.
+
+
+                    Toast.makeText(getApplicationContext(), status.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                    });
+                     ***/
+
+                    //LOADING SCREEN
+
+                    mloadingDialog = new loadingDialog(customerMapsActivity.this);
+
+                    //
+
+                    driverFoundID = sharedpreferences.getString(driverFoundId_s, null);
+                    rec_driv_can = sharedpreferences.getString(rec_drive_can_s, null);
+
+                    requestBol = sharedpreferences.getBoolean("req_bol", false);
+
+                    Log.d("adam", String.valueOf(requestBol));
+
+                    //    mSearchAddress = findViewById(R.id.et_address);
+                    //  mBtnLocate = findViewById(R.id.btn_locate);
+                    //  mBtnLocate.setOnClickListener(this::geoLocate);
+
+
+                    mDriverInfo = findViewById(R.id.driverInfo);
+
+                    mDriverProfileImage = findViewById(R.id.driverProfileImage);
+
+                    mDriverName = findViewById(R.id.driverName);
+                    mDriverPhone = findViewById(R.id.driverPhone);
+                    mDriverCar = findViewById(R.id.driverCar);
+
+                    mRatingBar = findViewById(R.id.ratingBar);
+       /* mRadioGroup = findViewById(R.id.radioGroup);
+        mRadioGroup.check(R.id.Truck);*/
+
+
+                    mLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+                    supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
+                    supportMapFragment.getMapAsync(this);
+
+                    initGoogleMap();
+
+                    if (rec_driv_can != null) {
+                        Log.d("XXXR", String.valueOf(rec_driv_can));
+                        Log.d("XXXR", String.valueOf(driverFoundID));
+
+                        newS = rec_driv_can.split("#", 2)[0];
+                        newT = rec_driv_can.split("#", 2)[1];
+                    }
+
+                    //requestRide = findViewById(R.id.requestRide);
+                    //    requestRide.performClick();
+
+
+
+       /* requestRide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
@@ -406,192 +517,177 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
                 }
             }
 
-        });
+        });*/
 
 
-
-
-
-
-
-        mLocationClient = new FusedLocationProviderClient(this);
-        mLocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-
-                for(  Location location : locationResult.getLocations()){
-                    if(getApplicationContext()!=null) {
-                        pickupLocation = new LatLng(location.getLatitude(), location.getLongitude());
-
-                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                        mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-                        //Toast.makeText(DriverMapsActivity.this, "LocationResult: Location is " + location.getLatitude() + "," + location.getLongitude(), Toast.LENGTH_SHORT).show();
-                        Log.d("MAP_DEBUG", "onLocationResult: Location is " + location.getLatitude() + " ," + location.getLongitude());
-                        showMarker(location.getLatitude(), location.getLongitude());
-
-                    }}
-            }
-        };
-        if (driverFoundID != null) {
-            try {
-
-
-                getDriverInfo();
-                getDriverLocation();
-                getHasRideEnded();
-
-
-
-            } catch (Exception e) {
-                e.printStackTrace();
-
-            }
-        }
-
-    }
-
-
-
-
-    // FIND NEAREST DRIVERS
-
-    private int radius = 1;
-    private Boolean driverFound = false;
-    private String driverFoundID = null;
-    private GeoQuery geoQuery;
-    //shared preferences
-    public static final String MyPREFERENCES = "com.ex.mover_f";
-    SharedPreferences sharedpreferences;
-    public static final String driverFoundId_s = "driverFoundId_s";
-    DatabaseReference driverLocation;
-
-
-    private void getClosestDriver() {
-        if(driverFoundID==null){
-            driverLocation = FirebaseDatabase.getInstance().getReference().child("driversAvailable"); }
-        else { driverLocation = FirebaseDatabase.getInstance().getReference().child("driversWorking");}
-
-        GeoFire geoFire = new GeoFire(driverLocation);
-        geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
-        geoQuery.removeAllListeners();
-
-        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-            @Override
-            public void onKeyEntered(String key, GeoLocation location) {
-                if (!driverFound && requestBol) {
-
-                    DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(key);
-                    mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                    mLocationClient = new FusedLocationProviderClient(this);
+                    mLocationCallback = new LocationCallback() {
                         @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                        public void onLocationResult(LocationResult locationResult) {
 
-                                Map<String, Object> driverMap = (Map<String, Object>) dataSnapshot.getValue();
-                                if (driverFound) {
-                                    return;
-                                }
+                            for (Location location : locationResult.getLocations()) {
+                                if (getApplicationContext() != null) {
+                                    // pickupLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
-                                if(rec_driv_can!=null) {
-                                    //  Toast.makeText(customerMapsActivity.this, "Time" + ((Integer.parseInt(getCurrentTimestamp()) - Integer.parseInt(rec_driv_can.split("$", 2)[1])) / 60), Toast.LENGTH_SHORT).show();
-                                }
-
-
-                                Log.d("ADAM", String.valueOf(diff));
-
-                                if (driverMap.get("service").equals(requestService) && ((diff>5 && newS.equals(dataSnapshot.getKey()))|| !(dataSnapshot.getKey().equals(newS))) ) {
-                                    driverFound = true;
-                                    Log.d("adamDiff", String.valueOf(diff));
-                                    Log.d("adamID", String.valueOf(newS));
-
-
-                                    driverFoundID = dataSnapshot.getKey();
-
-
-
-
-                                    SharedPreferences.Editor editor1 = sharedpreferences.edit();
-                                    editor1.putString(rec_drive_can_s, null);
-                                    editor1.apply();
-
-                                    SharedPreferences.Editor editor = sharedpreferences.edit();
-                                    Toast.makeText(customerMapsActivity.this, "id going in sp :" + driverFoundID, Toast.LENGTH_SHORT).show();
-                                    editor.putString(driverFoundId_s, driverFoundID);
-                                    editor.apply();
-
-
-                                    DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
-                                    String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                                    HashMap map = new HashMap();
-                                    map.put("customerRideId", customerId);
-                                    map.put("destination", destination);
-                                    if (destinationLatLng != null) {
-                                        map.put("destinationLat", destinationLatLng.latitude);
-                                        map.put("destinationLng", destinationLatLng.longitude);
-                                        driverRef.updateChildren(map);
-                                    } else {
-                                        Toast.makeText(customerMapsActivity.this, "Choose a Destination", Toast.LENGTH_SHORT).show();
-                                    }
-
-
-                                    mloadingDialog.startLoadingAnimation();
-                                    Handler handler = new Handler();
-                                    handler.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mloadingDialog.dismissDialog();
-                                        }
-                                    }, 10000);
-
-
-                                    getDriverLocation();
-                                    getDriverInfo();
-                                    getHasRideEnded();
-                                    requestRide.setText("Looking for Driver Location....");
+                                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                                    mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+                                    //Toast.makeText(DriverMapsActivity.this, "LocationResult: Location is " + location.getLatitude() + "," + location.getLongitude(), Toast.LENGTH_SHORT).show();
+                                    Log.d("MAP_DEBUG", "onLocationResult: Location is " + location.getLatitude() + " ," + location.getLongitude());
+                                    showMarker(location.getLatitude(), location.getLongitude());
 
                                 }
                             }
                         }
+                    };
+                    if (driverFoundID != null) {
+                        try {
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+
+                            getDriverInfo();
+                            //   getDriverLocation();
+                            getHasRideEnded();
+
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+
                         }
-                    });
+                    }
+
                 }
-            }
 
-            @Override
-            public void onKeyExited(String key) {
 
-            }
+                // FIND NEAREST DRIVERS
 
-            @Override
-            public void onKeyMoved(String key, GeoLocation location) {
+                private int radius = 1;
+                private Boolean driverFound = false;
+                private String driverFoundID = null;
+                private GeoQuery geoQuery;
+                //shared preferences
+                public static final String MyPREFERENCES = "com.ex.mover_f";
+                SharedPreferences sharedpreferences;
+                public static final String driverFoundId_s = "driverFoundId_s";
+                DatabaseReference driverLocation;
 
-            }
 
-            @Override
-            public void onGeoQueryReady() {
+                /*** private void getClosestDriver() {
+                 if(driverFoundID==null){
+                 driverLocation = FirebaseDatabase.getInstance().getReference().child("driversAvailable"); }
+                 else { driverLocation = FirebaseDatabase.getInstance().getReference().child("driversWorking");}
+
+                 GeoFire geoFire = new GeoFire(driverLocation);
+                 geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
+                 geoQuery.removeAllListeners();
+
+                 geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+                @Override public void onKeyEntered(String key, GeoLocation location) {
+                if (!driverFound && requestBol) {
+
+                DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(key);
+                mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+
+                Map<String, Object> driverMap = (Map<String, Object>) dataSnapshot.getValue();
+                if (driverFound) {
+                return;
+                }
+
+                if(rec_driv_can!=null) {
+                //  Toast.makeText(customerMapsActivity.this, "Time" + ((Integer.parseInt(getCurrentTimestamp()) - Integer.parseInt(rec_driv_can.split("$", 2)[1])) / 60), Toast.LENGTH_SHORT).show();
+                }
+
+
+                Log.d("ADAM", String.valueOf(diff));
+
+                if (driverMap.get("service").equals(requestService) && ((diff>5 && newS.equals(dataSnapshot.getKey()))|| !(dataSnapshot.getKey().equals(newS))) ) {
+                driverFound = true;
+                Log.d("adamDiff", String.valueOf(diff));
+                Log.d("adamID", String.valueOf(newS));
+
+
+                driverFoundID = dataSnapshot.getKey();
+
+
+
+
+                SharedPreferences.Editor editor1 = sharedpreferences.edit();
+                editor1.putString(rec_drive_can_s, null);
+                editor1.apply();
+
+                SharedPreferences.Editor editor = sharedpreferences.edit();
+                Toast.makeText(customerMapsActivity.this, "id going in sp :" + driverFoundID, Toast.LENGTH_SHORT).show();
+                editor.putString(driverFoundId_s, driverFoundID);
+                editor.apply();
+
+
+                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+                String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                HashMap map = new HashMap();
+                map.put("customerRideId", customerId);
+                map.put("destination", destination);
+                //  if (destinationLatLng != null) {
+                map.put("destinationLat", destinationLatLng.latitude);
+                map.put("destinationLng", destinationLatLng.longitude);
+                driverRef.updateChildren(map);
+                // } else {
+                //   Toast.makeText(customerMapsActivity.this, "Choose a Destination", Toast.LENGTH_SHORT).show();
+                // }
+
+
+                mloadingDialog.startLoadingAnimation();
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                @Override public void run() {
+                mloadingDialog.dismissDialog();
+                }
+                }, 10000);
+
+
+                getDriverLocation();
+                getDriverInfo();
+                getHasRideEnded();
+                //requestRide.setText("Looking for Driver Location....");
+
+                }
+                }
+                }
+
+                @Override public void onCancelled(DatabaseError databaseError) {
+                }
+                });
+                }
+                }
+
+                @Override public void onKeyExited(String key) {
+
+                }
+
+                @Override public void onKeyMoved(String key, GeoLocation location) {
+
+                }
+
+                @Override public void onGeoQueryReady() {
                 if (!driverFound && (radius<=10)) { //Changed
 
 
-                    radius++;
+                radius++;
 
-                    getClosestDriver();
+                getClosestDriver();
 
-                   /* if(radius>10) {
-                        Toast.makeText(customerMapsActivity.this, "Try Again Later", Toast.LENGTH_SHORT).show();
-                    endRide();
-                    }*/
+                /* if(radius>10) {
+                Toast.makeText(customerMapsActivity.this, "Try Again Later", Toast.LENGTH_SHORT).show();
+                endRide();
                 }
-            }
+                }
+                }
 
-            @Override
-            public void onGeoQueryError(DatabaseError error) {
+                @Override public void onGeoQueryError(DatabaseError error) {
 
-            }
-        });
-    }
+                }
+                });
+                 }***/
 
       /*-------------------------------------------- getDriverInfo -----
     |  Function(s) getDriverInfo
@@ -602,63 +698,63 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     |
     *-------------------------------------------------------------------*/
 
-    private void getDriverInfo() {
-        // FOUNDID = NULL // Toast.makeText(this, "DriverFoundID" + driverFoundID, Toast.LENGTH_SHORT).show();
-        if(driverFoundID!=null){
-            DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
-            mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Status = 1;
-                    mRadioGroup.setVisibility(GONE);
-                   // mSearchAddress.setVisibility(View.GONE);
+                private void getDriverInfo () {
+                    // FOUNDID = NULL // Toast.makeText(this, "DriverFoundID" + driverFoundID, Toast.LENGTH_SHORT).show();
+                    if (driverFoundID != null) {
+                        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+                        mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                Status = 1;
+                                //mRadioGroup.setVisibility(GONE);
+                                // mSearchAddress.setVisibility(View.GONE);
 //                    autocompleteFragment.getView().setVisibility(GONE);
 
-                   // mBtnLocate.setVisibility(View.GONE);
+                                // mBtnLocate.setVisibility(View.GONE);
 
 
-                    mDriverInfo.setVisibility(View.VISIBLE);
+                                mDriverInfo.setVisibility(View.VISIBLE);
 
-                    if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
 
-                        Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                        if (map.get("name") != null) {
-                            mDriverName.setText("Name:" + map.get("name").toString());
-                        }
-                        if (map.get("phone") != null) {
-                            mDriverPhone.setText(dataSnapshot.child("phone").getValue().toString());
-                        }
-                        if (map.get("car") != null) {
-                            mDriverCar.setText("Car :" + map.get("car").toString());
-                        }
-                        if (dataSnapshot.child("profileImageUrl").getValue() != null) {
-                            Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(mDriverProfileImage);
-                        }
+                                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
+                                    if (map.get("name") != null) {
+                                        mDriverName.setText("Name:" + map.get("name").toString());
+                                    }
+                                    if (map.get("phone") != null) {
+                                        mDriverPhone.setText(dataSnapshot.child("phone").getValue().toString());
+                                    }
+                                    if (map.get("car") != null) {
+                                        mDriverCar.setText("Car :" + map.get("car").toString());
+                                    }
+                                    if (dataSnapshot.child("profileImageUrl").getValue() != null) {
+                                        Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(mDriverProfileImage);
+                                    }
 
-                        int ratingSum = 0;
-                        float ratingsTotal = 0;
-                        float ratingsAvg = 0;
-                        for (DataSnapshot child : dataSnapshot.child("rating").getChildren()) {
-                            ratingSum = ratingSum + Integer.valueOf(child.getValue().toString());
-                            ratingsTotal++;
-                        }
-                        if (ratingsTotal != 0) {
-                            ratingsAvg = ratingSum / ratingsTotal;
-                            mRatingBar.setRating(ratingsAvg);
-                        }
+                                    int ratingSum = 0;
+                                    float ratingsTotal = 0;
+                                    float ratingsAvg = 0;
+                                    for (DataSnapshot child : dataSnapshot.child("rating").getChildren()) {
+                                        ratingSum = ratingSum + Integer.valueOf(child.getValue().toString());
+                                        ratingsTotal++;
+                                    }
+                                    if (ratingsTotal != 0) {
+                                        ratingsAvg = ratingSum / ratingsTotal;
+                                        mRatingBar.setRating(ratingsAvg);
+                                    }
 
 
+                                }
 
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        });
                     }
-
-
                 }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                }
-            });}
-    }
 
     /*-------------------------------------------- Map specific functions -----
     |  Function(s) getDriverLocation
@@ -674,25 +770,25 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     |
     *-------------------------------------------------------------------*/
 
-    Marker mDriverMarker;
-    DatabaseReference driverLocationRef;
-    private ValueEventListener driverLocationRefListener;
-    private void getDriverLocation(){
-        if(driverFoundID!=null){
-            driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
-            driverLocationRefListener= driverLocationRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.exists() ){
-                        List<Object> map = (List<Object>) dataSnapshot.getValue();
-                        double locationLat = 0;
-                        double locationLng = 0;
-                        requestRide.setText("Driver Found");
 
-                        //
-                        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                DatabaseReference driverLocationRef;
+                private ValueEventListener driverLocationRefListener;
+              /*  private void getDriverLocation () {
+                    if (driverFoundID != null) {
+                        driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
+                        driverLocationRefListener = driverLocationRef.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists()) {
+                                    List<Object> map = (List<Object>) dataSnapshot.getValue();
+                                    double locationLat = 0;
+                                    double locationLng = 0;
+                                    //   requestRide.setText("Driver Found");
 
-                        if(pickupLocation!=null) {
+                                    //
+                                    String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                     if(pickupLocation!=null) {
                             DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
                             GeoFire geoFire1 = new GeoFire(assignedCustomerRef);
                             geoFire1.setLocation("pickLocation", new GeoLocation(pickupLocation.latitude, pickupLocation.longitude));
@@ -702,55 +798,47 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
                         GeoFire geoFire = new GeoFire(ref);
                         geoFire.removeLocation(userId);
 
-                        //
+                                    //
 
-                        if(map.get(0) != null){
-                            locationLat = Double.parseDouble(map.get(0).toString());
-                        }
 
-                        if(map.get(1) != null){
-                            locationLng = Double.parseDouble(map.get(1).toString());
-                        }
 
-                        LatLng driverLatLng = new LatLng(locationLat,locationLng);
+                                    Location loc1 = new Location("");
+                                    loc1.setLatitude(pickupLocation.latitude);
+                                    loc1.setLongitude(pickupLocation.longitude);
 
-                        if(mDriverMarker != null){
-                            mDriverMarker.remove();
-                        }
-                    Location loc1 = new Location("");
-                    loc1.setLatitude(pickupLocation.latitude);
-                    loc1.setLongitude(pickupLocation.longitude);
+                                    Location loc2 = new Location("");
+                                    loc2.setLatitude(driverLatLng.latitude);
+                                    loc2.setLongitude(driverLatLng.longitude);
 
-                    Location loc2 = new Location("");
-                    loc2.setLatitude(driverLatLng.latitude);
-                    loc2.setLongitude(driverLatLng.longitude);
+                                    float distance = loc1.distanceTo(loc2);
 
-                    float distance = loc1.distanceTo(loc2);
+                                    if (distance < 100) {
+                                        // requestRide.setText("Driver is Here");
+                                    } else {
+                                        // requestRide.setText("Driver Found" + " "+ distance +"m Away");
+                                    }
 
-                    if (distance<100){
-                        requestRide.setText("Driver is Here");
-                    }else{
-                        requestRide.setText("Driver Found" + " "+ distance +"m Away");
+
+                                    if (mDriverMarker != null) {
+                                        mDriverMarker.remove();
+                                    }
+                                    mDriverMarker = mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your Driver"));
+
+
+                                }
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        });
                     }
 
 
-                        if(mDriverMarker != null){
-                            mDriverMarker.remove();
-                        }
-                        mDriverMarker =mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your Driver"));
+                }*/
 
 
-                    }
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                }
-            });}
-
-
-    }
 
     /*-------------------------------------------- WORKING FUNCTIONALITY-----
     |  Function(s) getRouteToMarker,endRide,onBackPressed, *OnPause*
@@ -763,212 +851,206 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     *-------------------------------------------------------------------*/
 
 
-  /**  private void geoLocate() {
+                /**  private void geoLocate() {
 
 
 
 
 
-       // destination = mSearchAddress.getText().toString();
+                 // destination = mSearchAddress.getText().toString();
 
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                 Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
-        try {
-            List<Address> addressList = geocoder.getFromLocationName(destination, 3);
+                 try {
+                 List<Address> addressList = geocoder.getFromLocationName(destination, 3);
 
-            if (addressList.size() > 0) {
-                Address address = addressList.get(0);
-                destinationLatLng = new LatLng(address.getLatitude(), address.getLongitude());
-                gotoLocation(address.getLatitude(), address.getLongitude());
+                 if (addressList.size() > 0) {
+                 Address address = addressList.get(0);
+                 destinationLatLng = new LatLng(address.getLatitude(), address.getLongitude());
+                 gotoLocation(address.getLatitude(), address.getLongitude());
 
-                //showMarker
-                if(mDestinationMarker != null){
-                    mDestinationMarker.remove();
-                }
-                mDestinationMarker =mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(address.getLatitude(), address.getLongitude())).title("Destination"));
-
-
-                // Toast.makeText(this, address.getLocality(), Toast.LENGTH_SHORT).show();
-
-                Log.d("MAP_DEBUG", "geoLocate: Locality: " + address.getLocality());
-            }
-
-            for (Address address : addressList) {
-                Log.d("MAP_DEBUG", "geoLocate: Address: " + address.getAddressLine(address.getMaxAddressLineIndex()));
-            }
+                 //showMarker
+                 if(mDestinationMarker != null){
+                 mDestinationMarker.remove();
+                 }
+                 mDestinationMarker =mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(address.getLatitude(), address.getLongitude())).title("Destination"));
 
 
-        } catch (IOException e) {
+                 // Toast.makeText(this, address.getLocality(), Toast.LENGTH_SHORT).show();
+
+                 Log.d("MAP_DEBUG", "geoLocate: Locality: " + address.getLocality());
+                 }
+
+                 for (Address address : addressList) {
+                 Log.d("MAP_DEBUG", "geoLocate: Address: " + address.getAddressLine(address.getMaxAddressLineIndex()));
+                 }
 
 
-        }
+                 } catch (IOException e) {
 
 
-    }**/
+                 }
 
 
-
-    private DatabaseReference driveHasEndedRef;
-    private ValueEventListener driveHasEndedRefListener;
-
-    private void getHasRideEnded(){ //Check if driver has ended the ride
-        if(driverFoundID!=null){
-            driveHasEndedRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest").child("customerRideId");
-            driveHasEndedRefListener = driveHasEndedRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.exists()){
+                 }**/
 
 
-                    }else{
-                        Toast.makeText(customerMapsActivity.this,  "END DRIVER ID 2" + driverFoundID, Toast.LENGTH_SHORT).show();
+                private DatabaseReference driveHasEndedRef;
+                private ValueEventListener driveHasEndedRefListener;
+
+                private void getHasRideEnded () { //Check if driver has ended the ride
+                    if (driverFoundID != null) {
+                        driveHasEndedRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest").child("customerRideId");
+                        driveHasEndedRefListener = driveHasEndedRef.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists()) {
 
 
-                        endRide();
+                                } else {
+                                    Toast.makeText(customerMapsActivity.this, "END DRIVER ID 2" + driverFoundID, Toast.LENGTH_SHORT).show();
+
+
+                                    endRide();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        });
                     }
                 }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+                SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss aa");
+                private String getCurrentTimestamp () {
+                    Long timestamp = System.currentTimeMillis() / 1000;
+
+                    Date cal = Calendar.getInstance().getTime();
+                    String date = sdf.format(cal);
+
+                    return date;
+
                 }
-            });}
-    }
 
-    SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss aa");
-    private String getCurrentTimestamp() {
-        Long timestamp = System.currentTimeMillis() / 1000;
+                private void endRide () {
+                    Toast.makeText(this, "END DRIVER ID !" + driverFoundID, Toast.LENGTH_SHORT).show();
 
-        Date cal = Calendar.getInstance().getTime();
-        String date = sdf.format(cal);
-
-        return date;
-
-    }
-
-    private void endRide(){
-        Toast.makeText(this, "END DRIVER ID !" + driverFoundID, Toast.LENGTH_SHORT).show();
-
-        SharedPreferences.Editor editor = sharedpreferences.edit();
-        editor.putString(driverFoundId_s, null);
-        editor.putBoolean("req_bol", false);
-        editor.apply();
+                    SharedPreferences.Editor editor = sharedpreferences.edit();
+                    editor.putString(driverFoundId_s, null);
+                    editor.putBoolean("req_bol", false);
+                    editor.apply();
 
 
-        Status = 0;
-        requestBol = false;
+                    Status = 0;
+                    requestBol = false;
 
 
+                    if (driverLocationRef != null) {
+                        driverLocationRef.removeEventListener(driverLocationRefListener);
+                        driveHasEndedRef.removeEventListener(driveHasEndedRefListener);
+                    } else {
+                        Toast.makeText(this, "Cancelled", Toast.LENGTH_SHORT).show();
+                    }
 
-        if(driverLocationRef != null){
-            driverLocationRef.removeEventListener(driverLocationRefListener);
-            driveHasEndedRef.removeEventListener(driveHasEndedRefListener);}else{
-            Toast.makeText(this, "Cancelled", Toast.LENGTH_SHORT).show();
-        }
+                    if (geoQuery != null)
+                        geoQuery.removeAllListeners();
 
-        if (geoQuery != null)
-            geoQuery.removeAllListeners();
+                    if (driverFoundID != null) {
 
-        if (driverFoundID != null){
+                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+                        driverRef.removeValue();
+                        driverFoundID = null;
 
-            DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
-            driverRef.removeValue();
-            driverFoundID = null;
+                    }
+                    driverFound = false;
+                    radius = 1;
+                    String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        }
-        driverFound = false;
-        radius = 1;
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+                    GeoFire geoFire = new GeoFire(ref);
+                    geoFire.removeLocation(userId);
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.removeLocation(userId);
-
-        if(mCustomerMarker != null){
-            mCustomerMarker.remove();
-        }
-        if (mDriverMarker != null){
-            mDriverMarker.remove();
-        }
-        requestRide.setText("FIND MOVER");
-        mRadioGroup.setVisibility(View.VISIBLE);
+                    if (mCustomerMarker != null) {
+                        mCustomerMarker.remove();
+                    }
+                    if (newMarker != null) {
+                        newMarker.remove();
+                    }
+                    //requestRide.setText("FIND MOVER");
+                    // mRadioGroup.setVisibility(View.VISIBLE);
 //        autocompleteFragment.getView().setVisibility(View.VISIBLE);
 
-       // mBtnLocate.setVisibility(View.VISIBLE);
-       // mSearchAddress.setVisibility(View.VISIBLE);
-        mDriverInfo.setVisibility(GONE);
-        mDriverName.setText("");
-        mDriverPhone.setText("");
-        mDriverCar.setText("Destination: --");
-        destinationLatLng = null;
+                    // mBtnLocate.setVisibility(View.VISIBLE);
+                    // mSearchAddress.setVisibility(View.VISIBLE);
+                    mDriverInfo.setVisibility(GONE);
+                    mDriverName.setText("");
+                    mDriverPhone.setText("");
+                    mDriverCar.setText("Destination: --");
+                    destinationLatLng = null;
 
 
+                    mDriverProfileImage.setImageResource(R.mipmap.driver);
+                }
 
 
-        mDriverProfileImage.setImageResource(R.mipmap.driver);
-    }
+                @Override
+                protected void onPause () {
+                    super.onPause();
+                    if (mLocationCallback != null) {
+                        mLocationClient.removeLocationUpdates(mLocationCallback);
+                    }
+                }
 
 
+                @Override
+                public void onBackPressed () {
+
+                    if (mNavDrawer.isDrawerOpen(GravityCompat.START)) {
+                        mNavDrawer.closeDrawer(GravityCompat.START);
+                    } else {
 
 
+                        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                            backToast.cancel();
+                            Intent a = new Intent(Intent.ACTION_MAIN);
+                            a.addCategory(Intent.CATEGORY_HOME);
+                            a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(a);
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mLocationCallback != null) {
-            mLocationClient.removeLocationUpdates(mLocationCallback);
-        }
-    }
-
-
-
-    @Override
-    public void onBackPressed() {
-
-        if (mNavDrawer.isDrawerOpen(GravityCompat.START)) {
-            mNavDrawer.closeDrawer(GravityCompat.START);
-        } else {
+                            //super.onBackPressed();
+                        } else {
+                            backToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_SHORT);
+                            backToast.show();
+                        }
+                        backPressedTime = System.currentTimeMillis();
+                    }
+                }
 
 
-            if (backPressedTime + 2000 > System.currentTimeMillis()) {
-                backToast.cancel();
-                Intent a = new Intent(Intent.ACTION_MAIN);
-                a.addCategory(Intent.CATEGORY_HOME);
-                a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(a);
+                @Override
+                protected void onStop () {
+                    super.onStop();
 
-                //super.onBackPressed();
-            } else {
-                backToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_SHORT);
-                backToast.show();
-            }
-            backPressedTime = System.currentTimeMillis();
-        }
-    }
+                    if (driverFoundID == null) {
 
+                        SharedPreferences.Editor editor1 = sharedpreferences.edit();
 
-    @Override
-    protected void onStop() {
-        super.onStop();
+                        requestBol = false;
+                        editor1.putBoolean("req_bol", false);
 
-        if(driverFoundID==null){
+                        editor1.apply();
 
-            SharedPreferences.Editor editor1 = sharedpreferences.edit();
-
-            requestBol=false;
-            editor1.putBoolean("req_bol", false);
-
-            editor1.apply();
-
-        }
+                    }
 
 
-        requestRide.setText("FIND MOVER");
+                    //requestRide.setText("FIND MOVER");
         /*String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
 
         GeoFire geoFire = new GeoFire(ref);
         geoFire.removeLocation(userId);*/
-    }
+                }
 
     /*-------------------------------------------- Map specific functions -----
   |  Function(s) onMapReady, showMarker,hideSoftKeyboard,getCurrentLocation
@@ -983,97 +1065,93 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
   |
   *-------------------------------------------------------------------*/
 
-    private void showMarker(double lat, double lng) {
-        if (mCustomerMarker != null) {
-            mCustomerMarker.remove();
-        }
-        mCustomerMarker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title("You are Here"));
-    }
-
-    private void getCurrentLocation() {
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return;
-        }
-        mLocationClient.getLastLocation().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                Location location = task.getResult();
-                showMarker(location.getLatitude(), location.getLongitude());
-                if(mCustomerMarker != null){
-                    mCustomerMarker.remove();
+                private void showMarker ( double lat, double lng){
+                    if (mCustomerMarker != null) {
+                        mCustomerMarker.remove();
+                    }
+                    mCustomerMarker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title("You are Here"));
                 }
-                mCustomerMarker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("You are Here"));
-                // gotoLocation(location.getLatitude(), location.getLongitude());
-                pickupLocation= new LatLng(location.getLatitude(), location.getLongitude());
-                Log.d("MAP_DEBUG", "pickup Location " + pickupLocation);
+
+                private void getCurrentLocation () {
+
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                        return;
+                    }
+                    mLocationClient.getLastLocation().addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Location location = task.getResult();
+                            showMarker(location.getLatitude(), location.getLongitude());
+                            if (mCustomerMarker != null) {
+                                mCustomerMarker.remove();
+                            }
+                            mCustomerMarker = mGoogleMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("You are Here"));
+                            // gotoLocation(location.getLatitude(), location.getLongitude());
+                            pickupLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                            Log.d("MAP_DEBUG", "pickup Location " + pickupLocation);
 
 
-            }
+                        }
 
-        });
-
-
-    }
-    LocationRequest locationRequest;
-    private void getLocationUpdate() {
-
-        locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(2000);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return;
-        }
-        mLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
+                    });
 
 
+                }
+                LocationRequest locationRequest;
+                private void getLocationUpdate () {
 
-    }
+                    locationRequest = LocationRequest.create();
+                    locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                    locationRequest.setInterval(5000);
+                    locationRequest.setFastestInterval(2000);
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-
-
-
-    private void gotoLocation(double lat, double lng) {
-
-        LatLng latLng = new LatLng(lat, lng);
-
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM);
-
-        mGoogleMap.moveCamera(cameraUpdate);
-        mGoogleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-
-
-    }
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Log.d("MAP DEBUG", "onMapReady: Map is Showing");
-
-        mGoogleMap = googleMap;
-
-        locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(5000);
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return;
-        }
-
-        mLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
-        mGoogleMap.setMyLocationEnabled(true);
+                        return;
+                    }
+                    mLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
 
 
+                }
 
-    }
+
+                private void gotoLocation ( double lat, double lng){
+
+                    LatLng latLng = new LatLng(lat, lng);
+
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM);
+
+                    mGoogleMap.moveCamera(cameraUpdate);
+                    mGoogleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
 
-    private void hideSoftKeyboard(View view) {
-        InputMethodManager imm = (InputMethodManager) getSystemService
-                (INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-    }
+                }
+                @Override
+                public void onMapReady (GoogleMap googleMap){
+                    Log.d("MAP DEBUG", "onMapReady: Map is Showing");
+
+                    mGoogleMap = googleMap;
+
+                    locationRequest = LocationRequest.create();
+                    locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                    locationRequest.setInterval(5000);
+
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                        return;
+                    }
+
+                    mLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
+                    mGoogleMap.setMyLocationEnabled(true);
+
+
+                }
+
+
+                private void hideSoftKeyboard (View view){
+                    InputMethodManager imm = (InputMethodManager) getSystemService
+                            (INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                }
 
 
   /*-------------------------------------------- onRequestPermissionsResult -----
@@ -1087,163 +1165,162 @@ Log.d("XXXR",String.valueOf(rec_driv_can));
     |                request has it's own unique request code.
     |
     *-------------------------------------------------------------------*/
-  SupportMapFragment supportMapFragment;
-    private void initGoogleMap() {
+                SupportMapFragment supportMapFragment;
+                private void initGoogleMap () {
 
-        if (isServicesOk()) {
-            if (isGPSEnabled()) {
-                if (checkLocationPermission()) {
-                    //Toast.makeText(this, "Ready to Map", Toast.LENGTH_SHORT).show();
+                    if (isServicesOk()) {
+                        if (isGPSEnabled()) {
+                            if (checkLocationPermission()) {
+                                //Toast.makeText(this, "Ready to Map", Toast.LENGTH_SHORT).show();
 
-                   supportMapFragment = (SupportMapFragment) getSupportFragmentManager()
-                            .findFragmentById(R.id.map_fragment);
+                                supportMapFragment = (SupportMapFragment) getSupportFragmentManager()
+                                        .findFragmentById(R.id.map_fragment);
 
-                    supportMapFragment.getMapAsync(this);
-                } else {
-                    requestLocationPermission();
-                }
-            }
-        }
-    }
-
-    private boolean checkLocationPermission() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                    PERMISSION_REQUEST_CODE);
-        } else {
-            mLocationPermissionGranted = true;
-        }
-    }
-
-    private boolean isServicesOk() {
-
-        GoogleApiAvailability googleApi = GoogleApiAvailability.getInstance();
-
-        int result = googleApi.isGooglePlayServicesAvailable(this);
-
-        if (result == ConnectionResult.SUCCESS) {
-            return true;
-        } else if (googleApi.isUserResolvableError(result)) {
-            Dialog dialog = googleApi.getErrorDialog(this, result, PLAY_SERVICES_ERROR_CODE, task ->
-                    Toast.makeText(this, "Dialog is cancelled by User", Toast.LENGTH_SHORT).show());
-            dialog.show();
-        } else {
-            Toast.makeText(this, "Play services are required by this application", Toast.LENGTH_SHORT).show();
-        }
-        return false;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch(requestCode){
-            case 1:{
-                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                        mLocationPermissionGranted = true;
-                        Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+                                supportMapFragment.getMapAsync(this);
+                            } else {
+                                requestLocationPermission();
+                            }
+                        }
                     }
-                } else{
-
-                    Toast.makeText(getApplicationContext(), "Please provide the permission", Toast.LENGTH_LONG).show();
                 }
-                break;
-            }
-        }
-    }
 
-    private boolean isGPSEnabled() {
+                private boolean checkLocationPermission () {
+                    return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                            PackageManager.PERMISSION_GRANTED;
+                }
 
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                private void requestLocationPermission () {
+                    if (ContextCompat.checkSelfPermission(this,
+                            Manifest.permission.ACCESS_COARSE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                                PERMISSION_REQUEST_CODE);
+                    } else {
+                        mLocationPermissionGranted = true;
+                    }
+                }
 
-        boolean providerEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                private boolean isServicesOk () {
 
-        if (providerEnabled) {
-            return true;
-        } else {
+                    GoogleApiAvailability googleApi = GoogleApiAvailability.getInstance();
 
-            AlertDialog alertDialog = new AlertDialog.Builder(this)
-                    .setTitle("GPS Permissions")
-                    .setMessage("GPS is required for this app to work. Please enable GPS.")
-                    .setPositiveButton("Yes", ((dialogInterface, i) -> {
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivityForResult(intent, GPS_REQUEST_CODE);
-                    }))
-                    .setCancelable(false)
-                    .show();
+                    int result = googleApi.isGooglePlayServicesAvailable(this);
 
+                    if (result == ConnectionResult.SUCCESS) {
+                        return true;
+                    } else if (googleApi.isUserResolvableError(result)) {
+                        Dialog dialog = googleApi.getErrorDialog(this, result, PLAY_SERVICES_ERROR_CODE, task ->
+                                Toast.makeText(this, "Dialog is cancelled by User", Toast.LENGTH_SHORT).show());
+                        dialog.show();
+                    } else {
+                        Toast.makeText(this, "Play services are required by this application", Toast.LENGTH_SHORT).show();
+                    }
+                    return false;
+                }
 
+                @Override
+                public void onRequestPermissionsResult ( int requestCode,
+                @NonNull String[] permissions, @NonNull int[] grantResults){
+                    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                    switch (requestCode) {
+                        case 1: {
+                            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                    mLocationPermissionGranted = true;
+                                    Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
 
+                                Toast.makeText(getApplicationContext(), "Please provide the permission", Toast.LENGTH_LONG).show();
+                            }
+                            break;
+                        }
+                    }
+                }
 
-        }
+                private boolean isGPSEnabled () {
 
-        return false;
-    }
+                    LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
+                    boolean providerEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+                    if (providerEnabled) {
+                        return true;
+                    } else {
 
-        if (requestCode == GPS_REQUEST_CODE) {
-
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-            boolean providerEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-            if (providerEnabled) {
-                Toast.makeText(this, "GPS is enabled", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "GPS not enabled. Unable to show user location", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-
-
-    // ********* TOOL BAR ACTIONS********************
-
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-        switch (menuItem.getItemId()){
-            case R.id.home :
-                Intent intent = new Intent(customerMapsActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish();
-                break;
-
-            case R.id.settings :
-                intent = new Intent(customerMapsActivity.this, customerSettingsActivity.class);
-                startActivity(intent);
-                finish();
-                break;
-
-            case R.id.logout :
-                //if(status ==0)
-                FirebaseAuth.getInstance().signOut();
-                intent = new Intent(customerMapsActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
-                break;
-
-            case R.id.history :
-                //if(status ==0)
-                intent = new Intent(customerMapsActivity.this, history.class);
-                intent.putExtra("customerOrDriver","Customers");
-                startActivity(intent);
-                finish();
-                break;
+                        AlertDialog alertDialog = new AlertDialog.Builder(this)
+                                .setTitle("GPS Permissions")
+                                .setMessage("GPS is required for this app to work. Please enable GPS.")
+                                .setPositiveButton("Yes", ((dialogInterface, i) -> {
+                                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    startActivityForResult(intent, GPS_REQUEST_CODE);
+                                }))
+                                .setCancelable(false)
+                                .show();
 
 
-        }
-        return true;
-    }
-}
+                    }
+
+                    return false;
+                }
+
+
+                @Override
+                protected void onActivityResult ( int requestCode, int resultCode,
+                @Nullable Intent data){
+                    super.onActivityResult(requestCode, resultCode, data);
+
+                    if (requestCode == GPS_REQUEST_CODE) {
+
+                        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+                        boolean providerEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+                        if (providerEnabled) {
+                            Toast.makeText(this, "GPS is enabled", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "GPS not enabled. Unable to show user location", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+
+
+                // ********* TOOL BAR ACTIONS********************
+
+                @Override
+                public boolean onNavigationItemSelected (@NonNull MenuItem menuItem){
+                    switch (menuItem.getItemId()) {
+                        case R.id.home:
+                            Intent intent = new Intent(customerMapsActivity.this, LoginActivity.class);
+                            startActivity(intent);
+                            finish();
+                            break;
+
+                        case R.id.settings:
+                            intent = new Intent(customerMapsActivity.this, customerSettingsActivity.class);
+                            startActivity(intent);
+                            finish();
+                            break;
+
+                        case R.id.logout:
+                            //if(status ==0)
+                            FirebaseAuth.getInstance().signOut();
+                            intent = new Intent(customerMapsActivity.this, MainActivity.class);
+                            startActivity(intent);
+                            finish();
+                            break;
+
+                        case R.id.history:
+                            //if(status ==0)
+                            intent = new Intent(customerMapsActivity.this, history.class);
+                            intent.putExtra("customerOrDriver", "Customers");
+                            startActivity(intent);
+                            finish();
+                            break;
+
+
+                    }
+                    return true;
+                }
+            };

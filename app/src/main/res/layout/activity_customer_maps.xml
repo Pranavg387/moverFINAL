@@ -24,12 +24,12 @@
         app:layout_constraintVertical_bias="1.0" />
 
     <Button
-        android:id="@+id/requestRide"
+        android:id="@+id/cancelRide"
         android:layout_width="399dp"
         android:layout_height="44dp"
 
         android:background="@color/design_default_color_on_secondary"
-        android:text="Look for Movers"
+        android:text="Cancel Ride"
         android:textAllCaps="true"
         android:textColor="@color/BallReleaseColor"
         android:textStyle="bold"
@@ -41,16 +41,7 @@
 
 
 
-    <TextView
-        android:id="@+id/cancelRide"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/map_fragment"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/requestRide"
-        app:layout_constraintVertical_bias="0.0" />
+
 
     <LinearLayout
         android:id="@+id/driverInfo"
@@ -62,7 +53,7 @@
         android:background="@color/basePressColor"
 
 android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/requestRide"
+        app:layout_constraintBottom_toTopOf="@+id/cancelRide"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.32"
         app:layout_constraintStart_toStartOf="parent"
@@ -142,43 +133,7 @@ android:visibility="gone"
         </LinearLayout>
     </LinearLayout>
 
-    <RadioGroup
-        android:id="@+id/radioGroup"
-        android:layout_width="386dp"
-        android:layout_height="39dp"
-        android:background="@android:color/black"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/requestRide"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.36"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95">
 
-        <RadioButton
-            android:id="@+id/Truck"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Truck"
-            android:textColor="@color/basePressColor" />
-
-        <RadioButton
-            android:id="@+id/Tempo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Tempo"
-            android:textColor="@color/basePressColor" />
-
-        <RadioButton
-            android:id="@+id/Car"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Car"
-            android:textColor="@color/basePressColor" />
-    </RadioGroup>
 
     <TextView
         android:id="@+id/textView2"
