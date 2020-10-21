@@ -2,10 +2,14 @@
 package com.example.mover_f;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,8 +17,10 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,8 +32,11 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.libraries.places.api.Places;
@@ -59,7 +68,10 @@ public class multipleRideActivity extends AppCompatActivity {
     private String destination = "", pickup ="";
     private Boolean requestBol = false;
     private FusedLocationProviderClient mLocationClient;
-
+    private static final int PERMISSION_REQUEST_CODE = 9001;
+    private static final int PLAY_SERVICES_ERROR_CODE = 9002;
+    private static final int GPS_REQUEST_CODE = 9003;
+    boolean mLocationPermissionGranted;
     private LatLng pickupLocation, fragment_pickup , destinationLatLng ;
     public static final String multiple_dest_s = "multiple_dest_s", multiple_loc_s="multiple_loc_s";
     private  String multiple_dest = null, multiple_loc= null;
@@ -70,6 +82,8 @@ public class multipleRideActivity extends AppCompatActivity {
     private String rec_driv_can = null;
     private String driverFoundID = null;
     public static final String driverFoundId_s = "driverFoundId_s";
+    private String multiple_driver,multiple_driver_s="multiple_driver_s";
+
     private RadioGroup mRadioGroup;
     String requestService;
 
@@ -80,6 +94,8 @@ public class multipleRideActivity extends AppCompatActivity {
         sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
 
         rec_driv_can = sharedpreferences.getString(rec_drive_can_s,null);
+        multiple_driver = sharedpreferences.getString(multiple_driver_s,null);
+
 
         requestBol = sharedpreferences.getBoolean("req_bol",false);
 
@@ -90,6 +106,9 @@ public class multipleRideActivity extends AppCompatActivity {
         mRadioGroup.check(R.id.Truck);
 
         done = findViewById(R.id.done);
+
+        initGoogleMap();
+
         mLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         done.setOnClickListener(new View.OnClickListener() {
@@ -268,6 +287,20 @@ public class multipleRideActivity extends AppCompatActivity {
                                     SharedPreferences.Editor editor = sharedpreferences.edit();
                                     Toast.makeText(multipleRideActivity.this, "id going in sp :" + driverFoundID, Toast.LENGTH_SHORT).show();
                                     editor.putString(driverFoundId_s, driverFoundID);
+
+                                    if(multiple_driver ==null){
+
+
+                                        multiple_driver=driverFoundID;
+                                        Log.d("ADAMX909",multiple_driver);
+                                    }else {
+                                        multiple_driver += ("$" + driverFoundID);
+                                        Log.d("ADAMX9091",multiple_driver);
+
+                                    }
+
+                                    editor.putString(multiple_driver_s,multiple_driver);
+
                                     editor.apply();
 
                                     Intent intent = new Intent(multipleRideActivity.this, customerMapsActivity.class);
@@ -489,5 +522,123 @@ public class multipleRideActivity extends AppCompatActivity {
         }
 
 
+    }
+
+
+    //PERMISSIONS
+
+    private void initGoogleMap () {
+
+        if (isServicesOk()) {
+            if (isGPSEnabled()) {
+                if (checkLocationPermission()) {
+                    //Toast.makeText(this, "Ready to Map", Toast.LENGTH_SHORT).show();
+
+                } else {
+                    requestLocationPermission();
+                }
+            }
+        }
+    }
+
+    private boolean checkLocationPermission () {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermission () {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    PERMISSION_REQUEST_CODE);
+        } else {
+            mLocationPermissionGranted = true;
+        }
+    }
+
+    private boolean isServicesOk () {
+
+        GoogleApiAvailability googleApi = GoogleApiAvailability.getInstance();
+
+        int result = googleApi.isGooglePlayServicesAvailable(this);
+
+        if (result == ConnectionResult.SUCCESS) {
+            return true;
+        } else if (googleApi.isUserResolvableError(result)) {
+            Dialog dialog = googleApi.getErrorDialog(this, result, PLAY_SERVICES_ERROR_CODE, task ->
+                    Toast.makeText(this, "Dialog is cancelled by User", Toast.LENGTH_SHORT).show());
+            dialog.show();
+        } else {
+            Toast.makeText(this, "Play services are required by this application", Toast.LENGTH_SHORT).show();
+        }
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult ( int requestCode,
+                                             @NonNull String[] permissions, @NonNull int[] grantResults){
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 1: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        mLocationPermissionGranted = true;
+                        Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+
+                    Toast.makeText(getApplicationContext(), "Please provide the permission", Toast.LENGTH_LONG).show();
+                }
+                break;
+            }
+        }
+    }
+
+    private boolean isGPSEnabled () {
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        boolean providerEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        if (providerEnabled) {
+            return true;
+        } else {
+
+            AlertDialog alertDialog = new AlertDialog.Builder(this)
+                    .setTitle("GPS Permissions")
+                    .setMessage("GPS is required for this app to work. Please enable GPS.")
+                    .setPositiveButton("Yes", ((dialogInterface, i) -> {
+                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivityForResult(intent, GPS_REQUEST_CODE);
+                    }))
+                    .setCancelable(false)
+                    .show();
+
+
+        }
+
+        return false;
+    }
+
+
+    @Override
+    protected void onActivityResult ( int requestCode, int resultCode,
+                                      @Nullable Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == GPS_REQUEST_CODE) {
+
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+            boolean providerEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+            if (providerEnabled) {
+                Toast.makeText(this, "GPS is enabled", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "GPS not enabled. Unable to show user location", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

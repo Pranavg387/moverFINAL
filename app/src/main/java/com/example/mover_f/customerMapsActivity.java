@@ -803,7 +803,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                         loc2.setLatitude(driverLatLng.latitude);
                         loc2.setLongitude(driverLatLng.longitude);
 
-                        float distance = loc1.distanceTo(loc2); if (distance<100){
+                        float distance = loc1.distanceTo(loc2); if (distance<10){
                             cancelRide.setText("Driver is Here");
                         }else{
                             cancelRide.setText("Driver Found" + " "+ distance +"m Away");
@@ -971,7 +971,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                     if (newMarker != null) {
                         newMarker.remove();
                     }
-                    //requestRide.setText("FIND MOVER");
+                    cancelRide.setText("CANCEL RIDE");
                     // mRadioGroup.setVisibility(View.VISIBLE);
 //        autocompleteFragment.getView().setVisibility(View.VISIBLE);
 
@@ -985,6 +985,9 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
 
                     mDriverProfileImage.setImageResource(R.mipmap.driver);
+                    Intent intent = new Intent(customerMapsActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
                 }
 
 

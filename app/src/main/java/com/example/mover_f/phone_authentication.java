@@ -236,7 +236,7 @@ public class phone_authentication extends AppCompatActivity {
                                             Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
 
                                             if(map.get("phone").equals(contact)){
-                                                Intent i = new Intent (phone_authentication.this, multipleRideActivity.class);
+                                                Intent i = new Intent (phone_authentication.this, customerRides.class);
                                                 startActivity(i);
                                                 finish();
 

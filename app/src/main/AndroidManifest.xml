@@ -18,7 +18,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".multipleRideActivity"></activity>
+        <activity
+            android:name=".customerRides"
+            android:label="@string/title_activity_customer_rides"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".multipleRideActivity" />
         <activity android:name=".adminDetailedHistory" />
         <activity android:name=".adminHistory" />
         <activity android:name=".admin_customer_list" />
