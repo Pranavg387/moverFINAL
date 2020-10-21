@@ -285,7 +285,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
                    driverLatLng  = new LatLng(locationLat, locationLng);
 
-                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(driverLatLng, 15.5f), 4000, null);
+                 //   mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(driverLatLng, 15.5f), 4000, null);
 
                     Log.d("adamx(1)()",String.valueOf(driverLatLng));
 
@@ -534,8 +534,8 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                                     // pickupLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
                                     LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                                    mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+                                   // mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                                    //mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15));
                                     //Toast.makeText(DriverMapsActivity.this, "LocationResult: Location is " + location.getLatitude() + "," + location.getLongitude(), Toast.LENGTH_SHORT).show();
                                     Log.d("MAP_DEBUG", "onLocationResult: Location is " + location.getLatitude() + " ," + location.getLongitude());
                                     showMarker(location.getLatitude(), location.getLongitude());
@@ -952,7 +952,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                         }
 
                     }
-                    Log.d("ADAMXF",newDriversList);
+//                    Log.d("ADAMXF",newDriversList);
                     editor.putString(multiple_driver_s,newDriversList);
                     editor.putString(driverFoundId_s, null);
                     editor.putBoolean("req_bol", false);
@@ -987,6 +987,8 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                     DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
                     GeoFire geoFire = new GeoFire(ref);
                     geoFire.removeLocation(userId);
+
+
 
                     if (mCustomerMarker != null) {
                         mCustomerMarker.remove();

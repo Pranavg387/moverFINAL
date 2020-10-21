@@ -150,7 +150,7 @@ if(multiple_driver!=null){
                     Log.d("ADAMXCX",driver_k.toString());
 
                 }
-
+               if(driver_k!=null)
                 findme();
             }
 
@@ -181,7 +181,8 @@ if(multiple_driver!=null){
             db1.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if(snapshot.getValue().toString().equals(userId)){
+                    if(snapshot.exists()&& snapshot.getValue().toString().equals(userId)){
+
                             Log.d("adamxFINAL",snapshot.getValue().toString());
                             Log.d("adamxFINA2L",driver_k.get(finalI));
 
