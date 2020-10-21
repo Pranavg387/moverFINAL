@@ -21,6 +21,7 @@ public class customerRidesViewHolder extends RecyclerView.ViewHolder implements 
         to = itemView.findViewById(R.id.rideTo);
         from = itemView.findViewById(R.id.rideFrom);
         Log.d("AdamXXx", (String) to.getText());
+        itemView.setOnClickListener(this);
 
     }
 
@@ -28,7 +29,7 @@ public class customerRidesViewHolder extends RecyclerView.ViewHolder implements 
     public void onClick(View v) {
         Log.d("AdamXXx", (String) to.getText());
         Intent intent = new Intent(v.getContext(), customerMapsActivity.class);
-        intent.putExtra("driverFoundId", driverFoundID);
+        intent.putExtra("driverFoundId", (String) to.getText());
         v.getContext().startActivity(intent);
 
     }

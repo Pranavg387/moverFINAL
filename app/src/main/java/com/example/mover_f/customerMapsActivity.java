@@ -84,6 +84,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -102,7 +103,7 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
     private GoogleMap mGoogleMap;
 
     private EditText mSearchAddress;
-
+    private String multiple_driver,multiple_driver_s="multiple_driver_s";
     private int Status = 0;
     private String destination = "";
     public static final int DEFAULT_ZOOM = 15;
@@ -150,6 +151,9 @@ public class customerMapsActivity extends AppCompatActivity implements OnMapRead
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_drawer_layout_c);
 
+        Intent intent = getIntent();
+        driverFoundID = intent.getStringExtra("driverFoundId");
+        Log.d("ADAMXXXC",driverFoundID);
 
 cancelRide = findViewById(R.id.cancelRide);
 cancelRide.setOnClickListener(new View.OnClickListener() {
@@ -160,20 +164,19 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 });
 
 
-        Intent intent = getIntent();
-        driverFoundID = intent.getStringExtra("driverFoundId");
+
         sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         multiple_dest = sharedpreferences.getString(multiple_dest_s,null);
-        String[] latlong1 =  multiple_dest.split(",");
-        double latitude1 = Double.parseDouble(latlong1[0]);
-        double longitude1 = Double.parseDouble(latlong1[1]);
-        destinationLatLng =new LatLng(latitude1, longitude1);
+//        String[] latlong1 =  multiple_dest.split(",");
+//        double latitude1 = Double.parseDouble(latlong1[0]);
+ //       double longitude1 = Double.parseDouble(latlong1[1]);
+  //      destinationLatLng =new LatLng(latitude1, longitude1);
         Log.d("adamxx", String.valueOf(destinationLatLng));
         multiple_loc =  sharedpreferences.getString(multiple_loc_s,null);
-        String[] latlong2 =  multiple_loc.split(",");
-        double latitude2 = Double.parseDouble(latlong2[0]);
-        double longitude2 = Double.parseDouble(latlong2[1]);
-        fragment_pickup =new LatLng(latitude1, longitude1);
+//        String[] latlong2 =  multiple_loc.split(",");
+  //      double latitude2 = Double.parseDouble(latlong2[0]);
+    //    double longitude2 = Double.parseDouble(latlong2[1]);
+    //    fragment_pickup =new LatLng(latitude1, longitude1);
 
 
         //***************TOOLBAR**********************
@@ -282,6 +285,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
                    driverLatLng  = new LatLng(locationLat, locationLng);
 
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(driverLatLng, 15.5f), 4000, null);
 
                     Log.d("adamx(1)()",String.valueOf(driverLatLng));
 
@@ -368,7 +372,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
                     //
 
-                    driverFoundID = sharedpreferences.getString(driverFoundId_s, null);
+                  //  driverFoundID = sharedpreferences.getString(driverFoundId_s, null);
                     rec_driv_can = sharedpreferences.getString(rec_drive_can_s, null);
 
                     requestBol = sharedpreferences.getBoolean("req_bol", false);
@@ -398,7 +402,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                     supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
                     supportMapFragment.getMapAsync(this);
 
-                    initGoogleMap();
+                   // initGoogleMap();
 
                     if (rec_driv_can != null) {
                         Log.d("XXXR", String.valueOf(rec_driv_can));
@@ -548,12 +552,15 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                             getDriverLocation();
                             getHasRideEnded();
 
+                              //  mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(driverLatLng, 15.5f), 4000, null);
+
+
 
                         } catch (Exception e) {
                             e.printStackTrace();
 
                         }
-                    }
+                    }else{Log.d("ADAMDRIVER","DRIVER EMPTY");}
 
                 }
 
@@ -562,7 +569,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
                 private int radius = 1;
                 private Boolean driverFound = false;
-                private String driverFoundID = null;
+              private String driverFoundID ;
                 private GeoQuery geoQuery;
                 //shared preferences
                 public static final String MyPREFERENCES = "com.ex.mover_f";
@@ -776,8 +783,11 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
     private void getDriverLocation(){
         driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
         driverLocationRefListener= driverLocationRef.addValueEventListener(new ValueEventListener() {
+
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.d("ADAMHERE",driverFoundID);
+
                 if(dataSnapshot.exists() && requestBol){
                     List<Object> map = (List<Object>) dataSnapshot.getValue();
                     double locationLat = 0;
@@ -810,19 +820,17 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                         }}
 
 
-
-
-
-
                     if(newMarker != null){
                         newMarker.remove();
                     }
                     newMarker =mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your Driver"));
 
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(driverLatLng, 15.5f), 4000, null);
 
                 }
 
             }
+
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -926,11 +934,26 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                     return date;
 
                 }
-
+    String newDriversList=null;
+    String[] driver_list;
                 private void endRide () {
                     Toast.makeText(this, "END DRIVER ID !" + driverFoundID, Toast.LENGTH_SHORT).show();
-
                     SharedPreferences.Editor editor = sharedpreferences.edit();
+
+                    multiple_driver = sharedpreferences.getString(multiple_driver_s,null);
+                    driver_list = multiple_driver.split("\\$");
+                    Log.d("ADAMXF",String.valueOf(driver_list.length));
+
+                    for(int i =0;i<driver_list.length;i++){
+                        if(driver_list[i].equals(driverFoundID)){
+
+                        }else{
+                            newDriversList=(driver_list[i]+"$");
+                        }
+
+                    }
+                    Log.d("ADAMXF",newDriversList);
+                    editor.putString(multiple_driver_s,newDriversList);
                     editor.putString(driverFoundId_s, null);
                     editor.putBoolean("req_bol", false);
                     editor.apply();
@@ -983,13 +1006,11 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                     mDriverCar.setText("Destination: --");
                     destinationLatLng = null;
 
-
                     mDriverProfileImage.setImageResource(R.mipmap.driver);
                     Intent intent = new Intent(customerMapsActivity.this, LoginActivity.class);
                     startActivity(intent);
                     finish();
                 }
-
 
                 @Override
                 protected void onPause () {
@@ -1111,7 +1132,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                 }
 
 
-                private void gotoLocation ( double lat, double lng){
+               private void gotoLocation ( double lat, double lng){
 
                     LatLng latLng = new LatLng(lat, lng);
 
@@ -1163,7 +1184,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
     |
     *-------------------------------------------------------------------*/
                 SupportMapFragment supportMapFragment;
-                private void initGoogleMap () {
+    /***            private void initGoogleMap () {
 
                     if (isServicesOk()) {
                         if (isGPSEnabled()) {
@@ -1282,7 +1303,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                     }
                 }
 
-
+***/
                 // ********* TOOL BAR ACTIONS********************
 
                 @Override
