@@ -289,7 +289,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
                         newMarker.remove();
                     }
                     newMarker = mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Driver"));
-                 
+
 
 
                 }
@@ -545,7 +545,7 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
 
                             getDriverInfo();
-                            //   getDriverLocation();
+                            getDriverLocation();
                             getHasRideEnded();
 
 
@@ -773,70 +773,64 @@ cancelRide.setOnClickListener(new View.OnClickListener() {
 
                 DatabaseReference driverLocationRef;
                 private ValueEventListener driverLocationRefListener;
-              /*  private void getDriverLocation () {
-                    if (driverFoundID != null) {
-                        driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
-                        driverLocationRefListener = driverLocationRef.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (dataSnapshot.exists()) {
-                                    List<Object> map = (List<Object>) dataSnapshot.getValue();
-                                    double locationLat = 0;
-                                    double locationLng = 0;
-                                    //   requestRide.setText("Driver Found");
+    private void getDriverLocation(){
+        driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
+        driverLocationRefListener= driverLocationRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists() && requestBol){
+                    List<Object> map = (List<Object>) dataSnapshot.getValue();
+                    double locationLat = 0;
+                    double locationLng = 0;
+                    cancelRide.setText("Driver Found");
 
-                                    //
-                                    String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-                     if(pickupLocation!=null) {
-                            DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
-                            GeoFire geoFire1 = new GeoFire(assignedCustomerRef);
-                            geoFire1.setLocation("pickLocation", new GeoLocation(pickupLocation.latitude, pickupLocation.longitude));
-                        }
-
-                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
-                        GeoFire geoFire = new GeoFire(ref);
-                        geoFire.removeLocation(userId);
-
-                                    //
-
-
-
-                                    Location loc1 = new Location("");
-                                    loc1.setLatitude(pickupLocation.latitude);
-                                    loc1.setLongitude(pickupLocation.longitude);
-
-                                    Location loc2 = new Location("");
-                                    loc2.setLatitude(driverLatLng.latitude);
-                                    loc2.setLongitude(driverLatLng.longitude);
-
-                                    float distance = loc1.distanceTo(loc2);
-
-                                    if (distance < 100) {
-                                        // requestRide.setText("Driver is Here");
-                                    } else {
-                                        // requestRide.setText("Driver Found" + " "+ distance +"m Away");
-                                    }
-
-
-                                    if (mDriverMarker != null) {
-                                        mDriverMarker.remove();
-                                    }
-                                    mDriverMarker = mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your Driver"));
-
-
-                                }
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-                            }
-                        });
+                    if(map.get(0) != null){
+                        locationLat = Double.parseDouble(map.get(0).toString());
+                    }
+                    if(map.get(1) != null){
+                        locationLng = Double.parseDouble(map.get(1).toString());
+                    }
+                    LatLng driverLatLng = new LatLng(locationLat,locationLng);
+                    if(newMarker != null){
+                        newMarker.remove();
                     }
 
+                    if(pickupLocation!=null){
+                   Location loc1 = new Location("");
+                    loc1.setLatitude(pickupLocation.latitude);
+                    loc1.setLongitude(pickupLocation.longitude);
+                        Location loc2 = new Location("");
+                        loc2.setLatitude(driverLatLng.latitude);
+                        loc2.setLongitude(driverLatLng.longitude);
 
-                }*/
+                        float distance = loc1.distanceTo(loc2); if (distance<100){
+                            cancelRide.setText("Driver is Here");
+                        }else{
+                            cancelRide.setText("Driver Found" + " "+ distance +"m Away");
+                        }}
+
+
+
+
+
+
+                    if(newMarker != null){
+                        newMarker.remove();
+                    }
+                    newMarker =mGoogleMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your Driver"));
+
+
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
+
+    }
 
 
 

@@ -79,7 +79,7 @@ public class multipleRideActivity extends AppCompatActivity {
         setContentView(R.layout.activity_multiple_ride);
         sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
 
-       rec_driv_can = sharedpreferences.getString(rec_drive_can_s,null);
+        rec_driv_can = sharedpreferences.getString(rec_drive_can_s,null);
 
         requestBol = sharedpreferences.getBoolean("req_bol",false);
 
